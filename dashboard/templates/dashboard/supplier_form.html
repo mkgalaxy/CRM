@@ -1,0 +1,215 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - فروشگاه بی‌نظیر</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <style>
+        input[type="text"], input[type="tel"], input[type="number"], select, textarea {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(139, 92, 246, 0.25);
+            background-color: rgba(15, 23, 42, 0.6);
+            color: #f1f5f9;
+            font-size: 0.875rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        input:focus, select:focus, textarea:focus {
+            background-color: rgba(15, 23, 42, 0.9);
+            border-color: #a855f7;
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
+        }
+        select option {
+            background-color: #0f172a;
+            color: #f1f5f9;
+        }
+    </style>
+</head>
+<body class="dark-purple-theme text-slate-100 min-h-screen font-sans antialiased selection:bg-purple-500 selection:text-white pb-10">
+
+    {% include "header.html" %}
+
+    <main class="container mx-auto px-3 md:px-6 my-6 max-w-4xl space-y-6">
+
+        <div class="card-dark flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-lg md:text-xl font-black text-purple-100 flex items-center gap-2">
+                    <span>🏭</span>
+                    <span>{{ title }}</span>
+                </h1>
+                <p class="text-xs text-purple-300/70 mt-1">اطلاعات کارگاه، تامین‌کننده و لیست محصولات تولیدی را ثبت یا ویرایش کنید.</p>
+            </div>
+            <a href="{% url 'supplier_list' %}"
+               class="w-full sm:w-auto text-center inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-purple-950/40 transition">
+                <span>↩️</span>
+                <span>بازگشت به لیست کارگاه‌ها</span>
+            </a>
+        </div>
+
+        {% if messages %}
+            <div class="space-y-2">
+                {% for message in messages %}
+                    <div class="p-4 rounded-2xl text-xs sm:text-sm font-semibold flex items-center gap-2 shadow-sm {% if message.tags == 'error' %}bg-rose-950/40 border border-rose-800/50 text-rose-300{% else %}bg-emerald-950/40 border border-emerald-800/50 text-emerald-300{% endif %}">
+                        <span>{% if message.tags == 'error' %}⚠️{% else %}✅{% endif %}</span>
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- کارت فرم اطلاعات اصلی کارگاه -->
+        <div class="card-dark p-6 md:p-8 space-y-6">
+            <h2 class="text-sm font-bold text-purple-200 border-b border-purple-900/40 pb-3 flex items-center gap-2">
+                <span>📋</span>
+                <span>اطلاعات اصلی کارگاه</span>
+            </h2>
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-xs font-bold text-purple-200 mb-2">نام کارگاه / تامین‌کننده <span class="text-rose-400">*</span></label>
+                        {{ form.name }}
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-purple-200 mb-2">شماره تماس کارگاه</label>
+                        {{ form.phone }}
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-purple-200 mb-2">نام مسئول فروش / رابط</label>
+                        {{ form.sales_manager }}
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-purple-200 mb-2">شماره همراه مسئول فروش</label>
+                        {{ form.sales_manager_phone }}
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-purple-200 mb-2">وضعیت کلی همکاری</label>
+                        {{ form.overall_status }}
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-purple-200 mb-2">{{ form.last_followup_jdate.label }}</label>
+                        {{ form.last_followup_jdate }}
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-purple-200 mb-2">{{ form.next_followup_jdate.label }}</label>
+                        {{ form.next_followup_jdate }}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-purple-200 mb-2">توضیحات، نحوه تسویه و آدرس</label>
+                    {{ form.notes }}
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-5 border-t border-purple-900/40">
+                    <a href="{% url 'supplier_list' %}" class="px-5 py-2.5 text-xs font-bold text-purple-300 hover:text-white rounded-xl transition">انصراف</a>
+                    <button type="submit" class="px-6 py-2.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-500 rounded-xl shadow-lg transition">💾 ذخیره اطلاعات کارگاه</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- مدیریت و ثبت محصولات این کارگاه -->
+        {% if supplier %}
+        <div class="card-dark p-6 md:p-8 space-y-6">
+            <h2 class="text-sm font-bold text-purple-200 border-b border-purple-900/40 pb-3 flex items-center gap-2">
+                <span>🛋️</span>
+                <span>محصولات تولیدی این کارگاه</span>
+            </h2>
+
+            <!-- جدول لیست محصولات -->
+            {% if products %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-right text-xs">
+                    <thead>
+                        <tr class="border-b border-purple-900/40 text-purple-300">
+                            <th class="py-2.5 px-3">نام محصول</th>
+                            <th class="py-2.5 px-3">کد / مدل محصول</th>
+                            <th class="py-2.5 px-3">قیمت پایه (تومان)</th>
+                            <th class="py-2.5 px-3 text-center">عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-purple-900/20">
+                        {% for prod in products %}
+                        <tr>
+                            <td class="py-3 px-3 font-semibold text-purple-100">{{ prod.name }}</td>
+                            <td class="py-3 px-3 text-purple-300 font-mono font-bold">{{ prod.code|default:"-" }}</td>
+                            <td class="py-3 px-3 text-emerald-400 font-bold">{{ prod.base_price|default:0 }} تومان</td>
+                            <td class="py-3 px-3 text-center">
+                                <form method="POST" action="{% url 'delete_supplier_product' prod.id %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="text-rose-400 hover:text-rose-300 text-xs font-bold">حذف 🗑️</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-xs text-purple-300/70">هنوز هیچ محصولی برای این کارگاه ثبت نشده است.</p>
+            {% endif %}
+
+            <!-- فرم افزودن محصول جدید -->
+            <form method="POST" class="bg-purple-950/30 border border-purple-800/30 p-4 rounded-2xl space-y-4">
+                {% csrf_token %}
+                <h3 class="text-xs font-bold text-purple-300">➕ ثبت محصول جدید برای این کارگاه</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-[11px] text-purple-300 mb-1">نام محصول <span class="text-rose-400">*</span></label>
+                        {{ product_form.name }}
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-purple-300 mb-1">کد / مدل محصول</label>
+                        {{ product_form.code }}
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-purple-300 mb-1">قیمت پایه (تومان)</label>
+                        {{ product_form.base_price }}
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] text-purple-300 mb-1">توضیحات محصول</label>
+                    {{ product_form.description }}
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" name="add_product" class="px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition">
+                        + افزودن محصول
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% else %}
+        <div class="card-dark p-4 text-center text-xs text-purple-300/70">
+            💡 پس از ثبت اطلاعات اولیه کارگاه، بخش ثبت محصولات و کدهای مربوط به این کارگاه ظاهر خواهد شد.
+        </div>
+        {% endif %}
+
+    </main>
+
+    <script>
+        document.querySelectorAll('.price-input').forEach(input => {
+            input.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/,/g, '').replace(/،/g, '');
+                if (!isNaN(value) && value.length > 0) {
+                    e.target.value = parseInt(value, 10).toLocaleString('en-US');
+                } else if (value.length === 0) {
+                    e.target.value = '';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

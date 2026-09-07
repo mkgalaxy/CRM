@@ -1,0 +1,174 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>گزارشات و آمار جامع - فروشگاه بی‌نظیر</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+</head>
+<body class="dark-purple-theme text-slate-100 min-h-screen font-sans antialiased selection:bg-purple-500 selection:text-white">
+
+    <!-- ۱. فراخوانی هدر یکسان و مجزا -->
+    {% include "header.html" %}
+
+    <!-- ۲. بدنه اصلی -->
+    <main class="container mx-auto px-3 md:px-6 my-6 max-w-7xl space-y-6">
+
+        <!-- کارت سربرگ صفحه -->
+        <div class="card-dark flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-base md:text-xl font-black text-purple-100 flex items-center gap-2">
+                    <span>📊</span>
+                    <span>داشبورد گزارشات و آمار جامع</span>
+                </h1>
+                <p class="text-xs text-purple-300/70 mt-1">تحلیل وضعیت مشتریان، پیگیری‌ها و مراحل سفارشات فروشگاه بی‌نظیر</p>
+            </div>
+            <a href="{% url 'dashboard_home' %}" class="w-full sm:w-auto text-center bg-purple-600 hover:bg-purple-500 text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5 shadow-lg shadow-purple-950/40">
+                <span>بازگشت به داشبورد</span>
+                <span>↩️</span>
+            </a>
+        </div>
+
+        <!-- بخش اول: آمار و شاخص‌های مشتریان -->
+        <div class="space-y-3">
+            <h2 class="text-xs sm:text-sm font-bold text-purple-200 flex items-center gap-1.5 px-1">
+                <span>👥</span>
+                <span>تحلیل وضعیت مشتریان</span>
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+                <!-- ۱. کل مشتریان فعال -->
+                <div class="card-dark space-y-2">
+                    <p class="text-xs font-bold text-purple-300/70">کل مشتریان فعال</p>
+                    <p class="text-2xl font-black text-purple-100">{{ active_customers_count }} <span class="text-xs font-normal text-purple-300/60">نفر</span></p>
+                </div>
+
+                <!-- ۲. مشتریان جدید -->
+                <div class="card-dark bg-indigo-950/30 border-indigo-800/40 space-y-2">
+                    <p class="text-xs font-bold text-indigo-300">مشتریان جدید (این ماه)</p>
+                    <p class="text-2xl font-black text-indigo-200">{{ new_customers_count }} <span class="text-xs font-normal text-indigo-400/70">نفر</span></p>
+                </div>
+
+                <!-- ۳. نیازمند پیگیری -->
+                <div class="card-dark bg-amber-950/30 border-amber-800/40 space-y-2">
+                    <p class="text-xs font-bold text-amber-300">نیازمند پیگیری (امروز/عقب‌افتاده)</p>
+                    <p class="text-2xl font-black text-amber-200">{{ pending_followups_count }} <span class="text-xs font-normal text-amber-400/70">مورد</span></p>
+                </div>
+
+                <!-- ۴. مشتریان خرید کرده -->
+                <div class="card-dark bg-emerald-950/30 border-emerald-800/40 space-y-2">
+                    <p class="text-xs font-bold text-emerald-300">مشتریان خرید کرده (موفق)</p>
+                    <p class="text-2xl font-black text-emerald-200">{{ purchased_count }} <span class="text-xs font-normal text-emerald-400/70">نفر</span></p>
+                </div>
+
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- ۵. مشتریان از دست رفته -->
+                <div class="card-dark bg-rose-950/30 border-rose-800/40 flex justify-between items-center">
+                    <div>
+                        <p class="text-xs font-bold text-rose-300">مشتریان از دست رفته (انصرافی)</p>
+                        <p class="text-xl font-black text-rose-200 mt-1">{{ cancelled_count }} مورد</p>
+                    </div>
+                    <span class="text-2xl">❌</span>
+                </div>
+
+                <!-- ۶. فاکتورهای صادر شده -->
+                <div class="card-dark bg-indigo-950/30 border-indigo-800/40 flex justify-between items-center">
+                    <div>
+                        <p class="text-xs font-bold text-indigo-300">تعداد کل فاکتورهای صادرشده</p>
+                        <p class="text-xl font-black text-indigo-200 mt-1">{{ total_invoices_count }} فاکتور</p>
+                    </div>
+                    <span class="text-2xl">📑</span>
+                </div>
+
+                <!-- ۷. نرخ تبدیل -->
+                <div class="card-dark bg-fuchsia-950/30 border-fuchsia-800/40 flex justify-between items-center">
+                    <div>
+                        <p class="text-xs font-bold text-fuchsia-300">نرخ تبدیل موفق</p>
+                        <p class="text-xl font-black text-fuchsia-200 mt-1">% {{ conversion_rate }}</p>
+                    </div>
+                    <span class="text-2xl">🎯</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- بخش دوم: آمار تفکیکی سفارشات و کارگاه‌ها -->
+        <div class="card-dark space-y-4 p-6">
+            <h2 class="text-sm sm:text-base font-bold text-purple-100 border-b border-purple-900/40 pb-3 flex items-center gap-2">
+                <span>📦</span>
+                <span>خلاصه وضعیت سفارشات و تولید</span>
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+
+                <!-- سفارشات تهران -->
+                <div class="p-3.5 bg-slate-900/80 border border-purple-900/40 rounded-xl space-y-1">
+                    <span class="text-xs font-bold text-purple-300/70">سفارشات تهران</span>
+                    <p class="text-lg font-black text-purple-100">{{ tehran_orders_count }}</p>
+                </div>
+
+                <!-- در حال تولید -->
+                <div class="p-3.5 bg-amber-950/40 border border-amber-800/50 rounded-xl space-y-1">
+                    <span class="text-xs font-bold text-amber-300">در حال تولید</span>
+                    <p class="text-lg font-black text-amber-200">{{ in_production_orders }}</p>
+                </div>
+
+                <!-- آماده ارسال -->
+                <div class="p-3.5 bg-blue-950/40 border border-blue-800/50 rounded-xl space-y-1">
+                    <span class="text-xs font-bold text-blue-300">آماده ارسال</span>
+                    <p class="text-lg font-black text-blue-200">{{ ready_orders }}</p>
+                </div>
+
+                <!-- سفارشات عقب‌افتاده -->
+                <div class="p-3.5 bg-rose-950/40 border border-rose-800/50 rounded-xl space-y-1">
+                    <span class="text-xs font-bold text-rose-300">سفارشات عقب‌افتاده</span>
+                    <p class="text-lg font-black text-rose-200">{{ overdue_orders_count }}</p>
+                </div>
+
+                <!-- تحویل داده شده -->
+                <div class="p-3.5 bg-emerald-950/40 border border-emerald-800/50 rounded-xl space-y-1">
+                    <span class="text-xs font-bold text-emerald-300">تحویل داده شده</span>
+                    <p class="text-lg font-black text-emerald-200">{{ delivered_orders_count }}</p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- بخش سوم: گزارش پیگیری‌های انجام‌شده -->
+        <div class="card-dark space-y-4 p-6">
+            <div class="flex justify-between items-center border-b border-purple-900/40 pb-3">
+                <h2 class="text-sm sm:text-base font-bold text-purple-100 flex items-center gap-2">
+                    <span>📞</span>
+                    <span>آمار پیگیری‌های انجام‌شده</span>
+                </h2>
+                <span class="badge badge-purple">
+                    مجموع پیگیری‌ها: {{ total_followups_done }} مورد
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                <div class="p-4 rounded-xl bg-slate-900/80 border border-purple-900/40">
+                    <p class="text-xs font-bold text-purple-300/70">پیگیری‌های امروز</p>
+                    <p class="text-xl font-black text-purple-100 mt-1">{{ todays_followups_done }}</p>
+                </div>
+                <div class="p-4 rounded-xl bg-emerald-950/40 border border-emerald-800/50">
+                    <p class="text-xs font-bold text-emerald-300">منجر به خرید موفق</p>
+                    <p class="text-xl font-black text-emerald-200 mt-1">{{ successful_followups_count }}</p>
+                </div>
+                <div class="p-4 rounded-xl bg-indigo-950/40 border border-indigo-800/50">
+                    <p class="text-xs font-bold text-indigo-300">پیامک/تماس‌های خروجی</p>
+                    <p class="text-xl font-black text-indigo-200 mt-1">{{ contacted_followups_count }}</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+</body>
+</html>

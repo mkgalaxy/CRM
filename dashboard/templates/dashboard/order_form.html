@@ -1,0 +1,290 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title|default:"فرم سفارش" }} - فروشگاه بی‌نظیر</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+</head>
+<body class="dark-purple-theme text-slate-100 min-h-screen font-sans antialiased selection:bg-purple-500 selection:text-white pb-10">
+
+    {% include "header.html" %}
+
+    <main class="container mx-auto px-3 md:px-6 my-6 max-w-4xl space-y-6">
+
+        <!-- کارت سربرگ فرم -->
+        <div class="card-dark flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h1 class="text-base md:text-xl font-black text-purple-100 flex items-center gap-2">
+                <span>{% if order %}✏️{% else %}📦{% endif %}</span>
+                <span>{{ title|default:"ثبت سفارش جدید" }}</span>
+            </h1>
+            <a href="{% url 'order_list' %}" class="w-full sm:w-auto text-center inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-purple-950/40 transition">
+                <span>بازگشت به لیست سفارشات</span>
+                <span>↩️</span>
+            </a>
+        </div>
+
+        <!-- پیام‌های خطای فرم -->
+        {% if form.errors %}
+            <div class="p-4 bg-rose-950/40 border border-rose-800/50 rounded-2xl text-rose-300 text-xs sm:text-sm font-semibold shadow-sm">
+                <p class="font-bold mb-2">لطفاً خطاهای زیر را برطرف کنید:</p>
+                <ul class="list-disc list-inside space-y-1">
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <li>{{ field }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <!-- کارت اصلی فرم -->
+        <div class="card-dark p-6 md:p-8">
+            <form method="POST" id="order-form" class="space-y-6">
+                {% csrf_token %}
+
+                <!-- انتخاب مشتری و کارگاه -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-xs font-bold text-purple-200 mb-2">
+                            انتخاب مشتری (همراه با شماره تماس) <span class="text-rose-400">*</span>
+                        </label>
+                        {{ form.customer }}
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-purple-200 mb-2">
+                            تولیدکننده / کارگاه
+                        </label>
+                        {{ form.supplier }}
+                    </div>
+                </div>
+
+                <!-- انتخاب محصول تولیدکننده و نام کالا -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-xs font-bold text-purple-200 mb-2">
+                            محصول تولیدکننده
+                        </label>
+                        {{ form.product }}
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-purple-200 mb-2">
+                            عنوان / جزئیات محصول <span class="text-rose-400">*</span>
+                        </label>
+                        {{ form.product_name }}
+                    </div>
+                </div>
+
+                <!-- مبالغ سفارش -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-xs font-bold text-purple-200 mb-2">
+                            مبلغ کل (تومان) <span class="text-rose-400">*</span>
+                        </label>
+                        {{ form.total_amount }}
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-purple-200 mb-2">
+                            پیش‌پرداخت دریافت شده (تومان)
+                        </label>
+                        {{ form.paid_amount }}
+                    </div>
+                </div>
+
+                <!-- وضعیت و تاریخ تحویل -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-xs font-bold text-purple-200 mb-2">
+                            وضعیت سفارش
+                        </label>
+                        {{ form.status }}
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-purple-200 mb-2">
+                            تاریخ احتمالی آماده شدن (شمسی)
+                        </label>
+                        {{ form.expected_ready_jdate }}
+                    </div>
+                </div>
+
+                <!-- کد سفارش / بارنامه -->
+                <div>
+                    <label class="block text-xs font-bold text-purple-200 mb-2">
+                        کد سفارش / شماره بارنامه
+                    </label>
+                    {{ form.order_code }}
+                </div>
+
+                <!-- توضیحات تکمیلی -->
+                <div>
+                    <label class="block text-xs font-bold text-purple-200 mb-2">
+                        جزئیات و نکات فنی سفارش
+                    </label>
+                    {{ form.description }}
+                </div>
+
+                <!-- دکمه‌های عملیات -->
+                <div class="flex items-center justify-between gap-3 pt-5 border-t border-purple-900/40">
+                    <div>
+                        {% if order %}
+                        <button type="button" onclick="document.getElementById('delete-modal').classList.remove('hidden')" class="px-4 py-2.5 text-xs font-bold text-rose-300 bg-rose-950/40 border border-rose-800/40 hover:bg-rose-900/60 rounded-xl transition flex items-center gap-1.5">
+                            <span>🗑️</span>
+                            <span>حذف سفارش</span>
+                        </button>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <a href="{% url 'order_list' %}" class="px-5 py-2.5 text-xs font-bold text-purple-300 hover:text-white rounded-xl hover:bg-purple-900/40 transition">
+                            انصراف
+                        </a>
+                        <button type="submit" class="px-6 py-2.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-500 rounded-xl shadow-lg shadow-purple-950/50 transition flex items-center gap-1.5">
+                            <span>💾</span>
+                            <span>{% if order %}ذخیره تغییرات{% else %}ثبت سفارش{% endif %}</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- مودال تأیید حذف -->
+    {% if order %}
+    <div id="delete-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-[#1a1235] border border-rose-900/50 p-6 rounded-2xl max-w-sm w-full shadow-2xl shadow-rose-950/40 space-y-4">
+            <h3 class="text-base font-bold text-rose-400 flex items-center gap-2">
+                <span>⚠️</span>
+                <span>تأیید حذف سفارش</span>
+            </h3>
+            <p class="text-xs text-purple-200 leading-relaxed">آیا از حذف دائم این سفارش اطمینان دارید؟ این عملیات غیرقابل بازگشت است.</p>
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" onclick="document.getElementById('delete-modal').classList.add('hidden')" class="px-4 py-2 bg-purple-900/40 hover:bg-purple-800 text-purple-200 rounded-xl text-xs font-semibold transition">
+                    انصراف
+                </button>
+                <form method="POST" action="{% url 'order_delete' order.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-rose-950/50">
+                        حذف نهایی
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ۱. افزودن استایل دارک تم به تمامی فیلدها
+            document.querySelectorAll('input, select, textarea').forEach(el => {
+                if (el.type !== 'hidden' && el.type !== 'submit') {
+                    el.classList.add('dark-input');
+                }
+            });
+
+            // ۲. جداکننده ۳ رقمی قیمت (کاما)
+            document.querySelectorAll('.price-input').forEach(input => {
+                input.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/,/g, '').replace(/،/g, '').replace(/\D/g, '');
+                    if (value) {
+                        e.target.value = Number(value).toLocaleString('en-US');
+                    } else {
+                        e.target.value = '';
+                    }
+                });
+            });
+
+            const customerSelect = document.getElementById('id_customer');
+            const supplierSelect = document.getElementById('id_supplier');
+            const productSelect = document.getElementById('id_product');
+            const productNameInput = document.getElementById('id_product_name');
+            const totalAmountInput = document.getElementById('id_total_amount');
+
+            // تابع کمکی برای بارگذاری لیست محصولات تولیدکننده
+            function loadSupplierProducts(supplierId, targetProductId = null) {
+                if (!productSelect) return;
+                productSelect.innerHTML = '<option value="">---------</option>';
+
+                if (supplierId) {
+                    fetch(`/api/suppliers/${supplierId}/products/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.products) {
+                                data.products.forEach(prod => {
+                                    const option = document.createElement('option');
+                                    option.value = prod.id;
+                                    option.textContent = prod.name + (prod.base_price ? ` (${parseInt(prod.base_price).toLocaleString()} تومان)` : '');
+                                    option.dataset.price = prod.base_price;
+                                    option.dataset.name = prod.name;
+                                    productSelect.appendChild(option);
+                                });
+
+                                if (targetProductId) {
+                                    productSelect.value = targetProductId;
+                                }
+                            }
+                        })
+                        .catch(err => console.error("خطا در دریافت لیست محصولات:", err));
+                }
+            }
+
+            // ۳. بارگذاری اتوماتیک اطلاعات مشتری (تولیدکننده، محصول، عنوان و مبلغ)
+            if (customerSelect) {
+                customerSelect.addEventListener('change', function() {
+                    const customerId = this.value;
+                    if (!customerId) return;
+
+                    fetch(`/api/customers/${customerId}/detail/`)
+                        .then(res => res.json())
+                        .then(data => {
+                            // پر کردن خودکار عنوان کالا
+                            if (data.product_name && productNameInput) {
+                                productNameInput.value = data.product_name;
+                            }
+
+                            // پر کردن خودکار مبلغ کل خرید
+                            if (data.potential_amount && totalAmountInput) {
+                                totalAmountInput.value = Number(data.potential_amount).toLocaleString('en-US');
+                            }
+
+                            // پر کردن تولیدکننده و به تبع آن بارگذاری محصولاتش
+                            if (data.supplier_id && supplierSelect) {
+                                supplierSelect.value = data.supplier_id;
+                                loadSupplierProducts(data.supplier_id, data.interested_product_id);
+                            }
+                        })
+                        .catch(err => console.error("خطا در دریافت اطلاعات مشتری:", err));
+                });
+            }
+
+            // ۴. تغییر دستی تولیدکننده توسط کاربر
+            if (supplierSelect) {
+                supplierSelect.addEventListener('change', function() {
+                    loadSupplierProducts(this.value);
+                });
+            }
+
+            // ۵. پر کردن عنوان و مبلغ با انتخاب دستی محصول
+            if (productSelect) {
+                productSelect.addEventListener('change', function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    if (selectedOption && selectedOption.dataset.name) {
+                        if (productNameInput && !productNameInput.value) {
+                            productNameInput.value = selectedOption.dataset.name;
+                        }
+                        if (totalAmountInput && selectedOption.dataset.price > 0) {
+                            totalAmountInput.value = Number(selectedOption.dataset.price).toLocaleString('en-US');
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

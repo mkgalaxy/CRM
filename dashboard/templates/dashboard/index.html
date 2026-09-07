@@ -1,0 +1,490 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>داشبورد کارهای امروز - فروشگاه بی‌نظیر</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+</head>
+<body class="dark-purple-theme text-slate-100 min-h-screen font-sans antialiased selection:bg-purple-500 selection:text-white">
+
+    <!-- ۱. فراخوانی هدر مجزا -->
+    {% include "header.html" %}
+
+    <!-- ۲. بدنه اصلی -->
+    <main class="container mx-auto px-3 md:px-6 my-6 max-w-7xl">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mb-4 p-4 bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-sm rounded-2xl flex justify-between items-center backdrop-blur-md shadow-lg shadow-emerald-950/20">
+                    <span class="flex items-center gap-2">✅ <span>{{ message }}</span></span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- نوار میانبر‌های سریع -->
+        <div class="mb-6 flex flex-wrap items-center justify-between gap-3 bg-slate-900/60 p-4 rounded-2xl border border-purple-900/30 backdrop-blur-md shadow-xl shadow-purple-950/20">
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs font-bold text-purple-300/60 ml-2">دسترسی سریع:</span>
+                <a href="{% url 'customer_list' %}" class="quick-btn border-purple-800/40 text-purple-200 bg-purple-950/40 hover:bg-purple-900/60">📋 لیست مشتریان</a>
+                <a href="{% url 'customer_add' %}" class="quick-btn border-indigo-800/40 text-indigo-200 bg-indigo-950/40 hover:bg-indigo-900/60">👤 + افزودن مشتری</a>
+                <a href="{% url 'order_add' %}" class="quick-btn border-emerald-800/40 text-emerald-200 bg-emerald-950/40 hover:bg-emerald-900/60">📦 + ثبت سفارش</a>
+                <a href="{% url 'supplier_list' %}" class="quick-btn border-fuchsia-800/40 text-fuchsia-200 bg-fuchsia-950/40 hover:bg-fuchsia-900/60">📋 لیست تولیدکنندگان</a>
+                <a href="{% url 'supplier_add' %}" class="quick-btn border-violet-800/40 text-violet-200 bg-violet-950/40 hover:bg-violet-900/60">🏭 + ثبت تولیدکننده</a>
+            </div>
+
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button onclick="toggleFilterPanel()" class="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-purple-900/40 active:scale-95">
+                    <span>🔍</span>
+                    <span>جستجو و فیلتر پیشرفته</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 🔍 پنل جستجو و فیلتر پیشرفته جامع -->
+        <div id="filter-panel" class="hidden mb-6 bg-slate-900/80 p-5 rounded-2xl border border-purple-800/40 backdrop-blur-xl shadow-2xl shadow-purple-950/40 space-y-4">
+            <div class="flex justify-between items-center border-b border-purple-900/40 pb-3">
+                <h3 class="text-sm font-bold text-purple-200 flex items-center gap-2">
+                    <span>🎯</span> جستجو و فیلتر دقیق سفارشات و مشتریان
+                </h3>
+                <a href="{% url 'dashboard_home' %}" class="text-xs text-rose-400 hover:text-rose-300 transition">پاکسازی فیلترها ❌</a>
+            </div>
+
+            <form method="GET" action="{% url 'dashboard_home' %}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 text-xs">
+                <div>
+                    <label class="block font-medium text-purple-300/80 mb-1.5">جستجو (نام / موبایل / محصول):</label>
+                    <input type="text" name="q" value="{{ request.GET.q }}" placeholder="مثلاً: علی محمدی..." class="dark-input">
+                </div>
+
+                <div>
+                    <label class="block font-medium text-purple-300/80 mb-1.5">وضعیت مشتری:</label>
+                    <select name="customer_status" class="dark-input">
+                        <option value="">همه وضعیت‌ها</option>
+                        <option value="NEW" {% if request.GET.customer_status == 'NEW' %}selected{% endif %}>جدید</option>
+                        <option value="FOLLOW_UP" {% if request.GET.customer_status == 'FOLLOW_UP' %}selected{% endif %}>در حال پیگیری</option>
+                        <option value="PURCHASED" {% if request.GET.customer_status == 'PURCHASED' %}selected{% endif %}>خرید کرده</option>
+                        <option value="CANCELLED" {% if request.GET.customer_status == 'CANCELLED' %}selected{% endif %}>منصرف شده</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-medium text-purple-300/80 mb-1.5">وضعیت سفارش / کارگاه:</label>
+                    <select name="order_status" class="dark-input">
+                        <option value="">همه سفارشات</option>
+                        <option value="IN_PRODUCTION" {% if request.GET.order_status == 'IN_PRODUCTION' %}selected{% endif %}>⚙️ در حال تولید</option>
+                        <option value="READY_TO_SHIP" {% if request.GET.order_status == 'READY_TO_SHIP' %}selected{% endif %}>🚚 آماده ارسال</option>
+                        <option value="IN_TRANSIT" {% if request.GET.order_status == 'IN_TRANSIT' %}selected{% endif %}>🛣️ در مسیر</option>
+                        <option value="READY_FOR_CUSTOMER" {% if request.GET.order_status == 'READY_FOR_CUSTOMER' %}selected{% endif %}>✅ آماده تحویل</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-medium text-purple-300/80 mb-1.5">نام تولیدکننده (کارگاه):</label>
+                    <input type="text" name="supplier_name" value="{{ request.GET.supplier_name }}" placeholder="نام کارگاه..." class="dark-input">
+                </div>
+
+                <div>
+                    <label class="block font-medium text-purple-300/80 mb-1.5">فروشنده / کاربر مسئول:</label>
+                    <input type="text" name="seller" value="{{ request.GET.seller }}" placeholder="نام فروشنده..." class="dark-input">
+                </div>
+
+                <div>
+                    <label class="block font-medium text-purple-300/80 mb-1.5">اولویت پیگیری:</label>
+                    <select name="priority" class="dark-input">
+                        <option value="">همه اولویت‌ها</option>
+                        <option value="HIGH" {% if request.GET.priority == 'HIGH' %}selected{% endif %}>🔴 بالا (فوری)</option>
+                        <option value="MEDIUM" {% if request.GET.priority == 'MEDIUM' %}selected{% endif %}>🟡 متوسط</option>
+                        <option value="LOW" {% if request.GET.priority == 'LOW' %}selected{% endif %}>🟢 معمولی</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-medium text-purple-300/80 mb-1.5">موعد تحویل سفارش:</label>
+                    <select name="delivery_due" class="dark-input">
+                        <option value="">همه زمان‌ها</option>
+                        <option value="NEXT_7_DAYS" {% if request.GET.delivery_due == 'NEXT_7_DAYS' %}selected{% endif %}>⏳ ۷ روز آینده</option>
+                        <option value="OVERDUE" {% if request.GET.delivery_due == 'OVERDUE' %}selected{% endif %}>⚠️ عقب‌افتاده</option>
+                    </select>
+                </div>
+
+                <div class="sm:col-span-2 lg:col-span-4 flex justify-end gap-2 pt-3 border-t border-purple-900/40">
+                    <button type="submit" class="bg-purple-600 hover:bg-purple-500 text-white font-bold px-6 py-2.5 rounded-xl transition-all duration-300 shadow-md shadow-purple-900/40 active:scale-95">اعمال فیلترها 🔍</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- گرید اصلی -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+            <!-- ستون راست (منوی تب‌ها) -->
+            <div class="lg:col-span-4 bg-slate-900/60 p-3.5 rounded-2xl border border-purple-900/30 backdrop-blur-md shadow-xl space-y-2">
+                <p class="text-xs font-bold text-purple-300/60 px-3 py-1">📋 برنامه و کارهای امروز:</p>
+
+                <button onclick="openTab(event, 'tab-customers')" class="tab-btn active w-full p-3.5 rounded-xl text-right flex justify-between items-center transition-all duration-300 font-semibold text-sm">
+                    <div class="flex items-center gap-2.5">
+                        <span>📞</span>
+                        <span>پیگیری‌های امروز مشتریان</span>
+                    </div>
+                    <span class="badge badge-purple">{{ todays_customers|length }}</span>
+                </button>
+
+                <button onclick="openTab(event, 'tab-suppliers')" class="tab-btn w-full p-3.5 rounded-xl text-right flex justify-between items-center transition-all duration-300 font-semibold text-sm">
+                    <div class="flex items-center gap-2.5">
+                        <span>🏭</span>
+                        <span>پیگیری تولیدکنندگان</span>
+                    </div>
+                    <span class="badge badge-indigo">{{ todays_suppliers|length }}</span>
+                </button>
+
+                <button onclick="openTab(event, 'tab-production')" class="tab-btn w-full p-3.5 rounded-xl text-right flex justify-between items-center transition-all duration-300 font-semibold text-sm">
+                    <div class="flex items-center gap-2.5">
+                        <span>⚙️</span>
+                        <span>سفارشات در حال تولید</span>
+                    </div>
+                    <span class="badge badge-amber">{{ in_production_count }}</span>
+                </button>
+
+                <button onclick="openTab(event, 'tab-shipping')" class="tab-btn w-full p-3.5 rounded-xl text-right flex justify-between items-center transition-all duration-300 font-semibold text-sm">
+                    <div class="flex items-center gap-2.5">
+                        <span>🚚</span>
+                        <span>سفارشات آماده ارسال</span>
+                    </div>
+                    <span class="badge badge-yellow">{{ ready_to_ship_count }}</span>
+                </button>
+
+                <button onclick="openTab(event, 'tab-transit')" class="tab-btn w-full p-3.5 rounded-xl text-right flex justify-between items-center transition-all duration-300 font-semibold text-sm">
+                    <div class="flex items-center gap-2.5">
+                        <span>🛣️</span>
+                        <span>سفارشات در مسیر</span>
+                    </div>
+                    <span class="badge badge-fuchsia">{{ in_transit_count }}</span>
+                </button>
+
+                <button onclick="openTab(event, 'tab-delivery')" class="tab-btn w-full p-3.5 rounded-xl text-right flex justify-between items-center transition-all duration-300 font-semibold text-sm">
+                    <div class="flex items-center gap-2.5">
+                        <span>✅</span>
+                        <span>آماده تحویل به مشتری</span>
+                    </div>
+                    <span class="badge badge-emerald">{{ ready_for_customer_count }}</span>
+                </button>
+
+                <button onclick="openTab(event, 'tab-overdue')" class="tab-btn w-full p-3.5 rounded-xl text-right flex justify-between items-center transition-all duration-300 font-semibold text-sm text-rose-300">
+                    <div class="flex items-center gap-2.5">
+                        <span>⚠️</span>
+                        <span>کارهای عقب‌افتاده</span>
+                    </div>
+                    <span class="badge badge-rose">{{ overdue_customers|length }}</span>
+                </button>
+            </div>
+
+            <!-- ستون چپ (محتوای کارها) -->
+            <div class="lg:col-span-8 bg-slate-900/60 p-5 md:p-6 rounded-2xl border border-purple-900/30 backdrop-blur-md shadow-xl min-h-[480px]">
+
+                <!-- ۱. پیگیری‌های مشتریان -->
+                <div id="tab-customers" class="tab-content space-y-4">
+                    <div class="border-b border-purple-900/40 pb-3 flex justify-between items-center">
+                        <h2 class="text-base font-bold text-purple-100 flex items-center gap-2">📞 پیگیری‌های امروز مشتریان</h2>
+                        <span class="badge badge-purple">{{ todays_customers|length }} مورد</span>
+                    </div>
+                    {% if todays_customers %}
+                        <div class="space-y-3">
+                            {% for customer in todays_customers %}
+                                <div id="customer-card-{{ customer.id }}" class="card-dark flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                                    <div class="flex items-start gap-3">
+                                        <button onclick="markTaskDone('customer', '{{ customer.id }}')" title="علامت‌گذاری به عنوان انجام‌شده" class="mt-1 w-6 h-6 rounded-lg border-2 border-purple-700/60 hover:border-emerald-400 hover:bg-emerald-500/20 flex items-center justify-center transition-all text-transparent hover:text-emerald-400 font-bold">
+                                            ✓
+                                        </button>
+
+                                        <div class="space-y-1.5">
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                <span class="font-bold text-purple-100 text-sm md:text-base">{{ customer.full_name }}</span>
+                                                <span class="text-xs text-purple-300/60">({{ customer.phone }})</span>
+                                                {% if customer.followup_time %}
+                                                    <span class="followup-time-badge text-xs bg-purple-900/60 text-purple-200 border border-purple-700/50 px-2 py-0.5 rounded-md font-bold" data-time="{{ customer.followup_time }}" data-name="{{ customer.full_name }}">
+                                                        ⏰ {{ customer.followup_time }}
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="text-xs text-slate-300">
+                                                <span>محصول: <strong class="text-purple-200">{{ customer.interested_products|default:"مشخص نشده" }}</strong></span>
+                                                {% if customer.status_display %}
+                                                    <span class="mr-2 px-2 py-0.5 bg-purple-950 border border-purple-800/40 rounded text-purple-300 font-medium">{{ customer.status_display }}</span>
+                                                {% endif %}
+                                            </div>
+                                            {% if customer.last_action %}
+                                                <div class="text-xs text-amber-300 bg-amber-950/40 inline-block px-2.5 py-1 rounded-md border border-amber-800/40 font-medium">
+                                                    📌 آخرین اقدام: {{ customer.last_action }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-2 self-start sm:self-center flex-wrap">
+                                        <button onclick="openModal('{{ customer.id }}', '{{ customer.full_name }}')" class="btn-action bg-purple-600 hover:bg-purple-500 text-white shadow-purple-900/30">
+                                            <span>📝</span> <span>ثبت نتیجه</span>
+                                        </button>
+                                        <a href="{% url 'customer_detail' customer.id %}" class="btn-action bg-slate-800 hover:bg-slate-700 text-purple-200 border border-purple-800/30">✏️ جزئیات</a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-16 text-purple-300/40 text-sm">هیچ پیگیری مشتری برای امروز ثبت نشده است.</div>
+                    {% endif %}
+                </div>
+
+                <!-- ۲. پیگیری تولیدکنندگان -->
+                <div id="tab-suppliers" class="tab-content hidden space-y-4">
+                    <div class="border-b border-purple-900/40 pb-3 flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-base font-bold text-purple-100">🏭 پیگیری‌های امروز کارگاه‌ها</h2>
+                            <a href="{% url 'supplier_add' %}" class="text-xs text-indigo-300 bg-indigo-950/60 hover:bg-indigo-900/80 px-2.5 py-1 rounded-lg font-bold border border-indigo-800/40 transition">+ ثبت جدید</a>
+                        </div>
+                        <span class="badge badge-indigo">{{ todays_suppliers|length }} مورد</span>
+                    </div>
+                    {% if todays_suppliers %}
+                        <div class="space-y-3">
+                            {% for supplier in todays_suppliers %}
+                                <div id="supplier-card-{{ supplier.id }}" class="card-dark flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                    <div class="flex items-center gap-3">
+                                        <button onclick="markTaskDone('supplier', '{{ supplier.id }}')" title="علامت‌گذاری به عنوان انجام‌شده" class="w-6 h-6 rounded-lg border-2 border-indigo-700/60 hover:border-emerald-400 hover:bg-emerald-500/20 flex items-center justify-center transition-all text-transparent hover:text-emerald-400 font-bold">
+                                            ✓
+                                        </button>
+                                        <div>
+                                            <p class="font-bold text-indigo-100 text-sm md:text-base">{{ supplier.name }}</p>
+                                            <p class="text-xs text-indigo-300/70 mt-1">مسئول فروش: {{ supplier.sales_manager|default:"-" }} ({{ supplier.phone }})</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <a href="{% url 'order_add' %}?supplier={{ supplier.id }}" class="btn-action bg-emerald-600 hover:bg-emerald-500 text-white">+ ثبت سفارش</a>
+                                        <a href="{% url 'supplier_edit' supplier.id %}" class="btn-action bg-slate-800 hover:bg-slate-700 text-purple-200 border border-purple-800/30">ویرایش ✏️</a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-16 text-purple-300/40 text-sm">امروز پیگیری کارگاهی ثبت نشده است.</div>
+                    {% endif %}
+                </div>
+
+                <!-- سایر تب‌های سفارشات -->
+                <div id="tab-production" class="tab-content hidden space-y-4">
+                    <div class="border-b border-purple-900/40 pb-3 flex justify-between items-center">
+                        <h2 class="text-base font-bold text-purple-100">⚙️ سفارشات در حال تولید</h2>
+                        <a href="{% url 'order_list' %}?status=IN_PRODUCTION" class="text-xs text-amber-300 font-bold hover:underline">مشاهده همه ⬅️</a>
+                    </div>
+                    <a href="{% url 'order_list' %}?status=IN_PRODUCTION" class="card-dark block hover:border-amber-500/40">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="text-xs font-bold text-amber-300">مدیریت و ویرایش کامل سفارشات در حال تولید</span>
+                                <p class="text-xs text-purple-300/70 mt-1">هم‌اکنون {{ in_production_count }} سفارش در کارگاه‌ها در حال ساخت است.</p>
+                            </div>
+                            <span class="btn-action bg-amber-600 hover:bg-amber-500 text-white">لیست و ویرایش ✏️</span>
+                        </div>
+                    </a>
+                </div>
+
+                <div id="tab-shipping" class="tab-content hidden space-y-4">
+                    <div class="border-b border-purple-900/40 pb-3 flex justify-between items-center">
+                        <h2 class="text-base font-bold text-purple-100">🚚 سفارشات آماده ارسال</h2>
+                        <a href="{% url 'order_list' %}?status=READY_TO_SHIP" class="text-xs text-yellow-300 font-bold hover:underline">مشاهده همه ⬅️</a>
+                    </div>
+                    <a href="{% url 'order_list' %}?status=READY_TO_SHIP" class="card-dark block hover:border-yellow-500/40">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="text-xs font-bold text-yellow-300">هماهنگی باربری و ویرایش اطلاعات بارنامه</span>
+                                <p class="text-xs text-purple-300/70 mt-1">تعداد {{ ready_to_ship_count }} سفارش منتظر ارسال هستند.</p>
+                            </div>
+                            <span class="btn-action bg-yellow-600 hover:bg-yellow-500 text-white">لیست و ویرایش ✏️</span>
+                        </div>
+                    </a>
+                </div>
+
+                <div id="tab-transit" class="tab-content hidden space-y-4">
+                    <div class="border-b border-purple-900/40 pb-3 flex justify-between items-center">
+                        <h2 class="text-base font-bold text-purple-100">🛣️ سفارشات در مسیر</h2>
+                        <a href="{% url 'order_list' %}?status=IN_TRANSIT" class="text-xs text-fuchsia-300 font-bold hover:underline">مشاهده همه ⬅️</a>
+                    </div>
+                    <a href="{% url 'order_list' %}?status=IN_TRANSIT" class="card-dark block hover:border-fuchsia-500/40">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="text-xs font-bold text-fuchsia-300">پیگیری بارنامه‌ها و تحویل انبار</span>
+                                <p class="text-xs text-purple-300/70 mt-1">تعداد {{ in_transit_count }} سفارش در مسیر ارسال می‌باشند.</p>
+                            </div>
+                            <span class="btn-action bg-fuchsia-600 hover:bg-fuchsia-500 text-white">لیست و ویرایش ✏️</span>
+                        </div>
+                    </a>
+                </div>
+
+                <div id="tab-delivery" class="tab-content hidden space-y-4">
+                    <div class="border-b border-purple-900/40 pb-3 flex justify-between items-center">
+                        <h2 class="text-base font-bold text-purple-100">✅ آماده تحویل به مشتری</h2>
+                        <a href="{% url 'order_list' %}?status=READY_FOR_CUSTOMER" class="text-xs text-emerald-300 font-bold hover:underline">مشاهده همه ⬅️</a>
+                    </div>
+                    <a href="{% url 'order_list' %}?status=READY_FOR_CUSTOMER" class="card-dark block hover:border-emerald-500/40">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="text-xs font-bold text-emerald-300">تسویه نهایی و تحویل سفارش</span>
+                                <p class="text-xs text-purple-300/70 mt-1">تعداد {{ ready_for_customer_count }} سفارش آماده تسویه و تحویل است.</p>
+                            </div>
+                            <span class="btn-action bg-emerald-600 hover:bg-emerald-500 text-white">لیست و ویرایش ✏️</span>
+                        </div>
+                    </a>
+                </div>
+
+                <div id="tab-overdue" class="tab-content hidden space-y-4">
+                    <div class="border-b border-purple-900/40 pb-3 flex justify-between items-center">
+                        <h2 class="text-base font-bold text-rose-400">⚠️ کارهای عقب‌افتاده</h2>
+                        <span class="badge badge-rose">{{ overdue_customers|length }} مورد</span>
+                    </div>
+                    {% if overdue_customers %}
+                        <div class="space-y-3">
+                            {% for customer in overdue_customers %}
+                                <div id="customer-card-{{ customer.id }}" class="card-dark border-rose-900/40 bg-rose-950/20 flex justify-between items-center flex-wrap gap-2">
+                                    <div>
+                                        <p class="font-bold text-rose-200 text-sm">{{ customer.full_name }}</p>
+                                        <p class="text-xs text-rose-300/70 mt-1">تاریخ پیگیری: {{ customer.next_followup_date }}</p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button onclick="openModal('{{ customer.id }}', '{{ customer.full_name }}')" class="btn-action bg-rose-600 hover:bg-rose-500 text-white">ثبت نتیجه 📝</button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-16 text-purple-300/40 text-sm">کار عقب‌افتاده‌ای ندارید.</div>
+                    {% endif %}
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- مدال ثبت سریع -->
+    <div id="followup-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-purple-800/50 rounded-3xl shadow-2xl shadow-purple-950/80 w-full max-w-md p-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-purple-900/40 pb-3">
+                <h3 class="font-bold text-purple-100 text-sm">📝 ثبت پیگیری: <span id="modal-customer-name" class="text-purple-400"></span></h3>
+                <button onclick="closeModal()" class="text-purple-400 hover:text-purple-200 text-xl font-bold transition">&times;</button>
+            </div>
+
+            <form id="followup-form" method="POST" class="space-y-3.5">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-xs font-bold text-purple-200/80 mb-1.5">نتیجه تماس:</label>
+                    <select name="result_action" required class="dark-input">
+                        <option value="NO_ANSWER">📞 پاسخ نداد</option>
+                        <option value="SMS_SENT">💬 پیامک ارسال شد</option>
+                        <option value="CALL_LATER">⏰ تماس بعدی</option>
+                        <option value="PURCHASED">🎉 خرید انجام شد</option>
+                        <option value="CANCELLED">❌ منصرف شد</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-purple-200/80 mb-1.5">تاریخ پیگیری بعدی:</label>
+                    <input type="text" name="next_date" placeholder="1405-05-10" class="dark-input">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-purple-200/80 mb-1.5">ساعت یادآوری بعدی (مثلاً 14:30):</label>
+                    <input type="text" name="next_time" placeholder="14:30" class="dark-input">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-purple-200/80 mb-1.5">توضیحات:</label>
+                    <textarea name="notes" rows="3" placeholder="یادداشت کوتاه..." class="dark-input"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t border-purple-900/40">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-800 text-purple-200 hover:bg-slate-700 rounded-xl text-xs font-medium transition">انصراف</button>
+                    <button type="submit" class="px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-purple-900/40 transition">ثبت</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- اسکریپت‌های اختصاصی کارهای امروز و اعلان‌ها -->
+    <script src="{% static 'js/dashboard.js' %}"></script>
+    <script>
+        function toggleFilterPanel() {
+            const panel = document.getElementById('filter-panel');
+            panel.classList.toggle('hidden');
+        }
+
+        function openTab(evt, tabName) {
+            let tabContents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.add("hidden");
+            }
+
+            let tabBtns = document.getElementsByClassName("tab-btn");
+            for (let i = 0; i < tabBtns.length; i++) {
+                tabBtns[i].classList.remove("active");
+            }
+
+            document.getElementById(tabName).classList.remove("hidden");
+            evt.currentTarget.classList.add("active");
+        }
+
+        function openModal(customerId, customerName) {
+            document.getElementById('modal-customer-name').innerText = customerName;
+            const form = document.getElementById('followup-form');
+            // ✅ اصلاح آدرس اکشن فرم مطابق با urls.py برای رفع خطای 404
+            form.action = `/customers/${customerId}/quick-followup/`;
+            document.getElementById('followup-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('followup-modal').classList.add('hidden');
+        }
+
+        function markTaskDone(type, id) {
+            const card = document.getElementById(`${type}-card-${id}`);
+            if (card) {
+                card.style.opacity = '0.3';
+                card.style.transform = 'scale(0.98)';
+                card.style.pointerEvents = 'none';
+                setTimeout(() => {
+                    card.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        function requestNotificationPermission() {
+            if ("Notification" in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        alert("🔔 سیستم یادآوری هوشمند با موفقیت فعال شد!");
+                    } else {
+                        alert("دسترسی به اعلانات داده نشد.");
+                    }
+                });
+            } else {
+                alert("مرورگر شما از اعلانات پشتیبانی نمی‌کند.");
+            }
+        }
+
+        setInterval(() => {
+            if ("Notification" in window && Notification.permission === "granted") {
+                const now = new Date();
+                const currentHoursMinutes = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+                document.querySelectorAll('.followup-time-badge').forEach(badge => {
+                    const taskTime = badge.getAttribute('data-time');
+                    const customerName = badge.getAttribute('data-name');
+
+                    if (taskTime === currentHoursMinutes) {
+                        new Notification("⏰ یادآوری پیگیری مشتری!", {
+                            body: `زمان پیگیری ${customerName} فرا رسیده است (${taskTime})`,
+                            icon: "/static/images/logo.png"
+                        });
+                    }
+                });
+            }
+        }, 60000);
+    </script>
+</body>
+</html>

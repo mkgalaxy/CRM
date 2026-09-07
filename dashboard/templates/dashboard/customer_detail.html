@@ -1,0 +1,75 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تایم‌لاین {{ customer.full_name }} - فروشگاه بی‌نظیر</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+</head>
+<body class="dark-purple-theme text-slate-100 min-h-screen font-sans antialiased selection:bg-purple-500 selection:text-white">
+
+    <!-- ۱. فراخوانی هدر یکسان -->
+    {% include "header.html" %}
+
+    <!-- ۲. بدنه اصلی -->
+    <main class="container mx-auto px-3 md:px-6 my-6 max-w-4xl space-y-6">
+
+        <!-- کارت مشخصات مشتری و دکمه بازگشت -->
+        <div class="card-dark flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="space-y-1.5">
+                <div class="flex items-center gap-3">
+                    <h1 class="text-lg md:text-xl font-black text-purple-100">{{ customer.full_name }}</h1>
+                    <span class="badge badge-purple text-[11px]">{{ customer.get_status_display }}</span>
+                </div>
+                <p class="text-xs text-purple-300/70 flex items-center gap-2">
+                    <span>📞 شماره تماس: <strong class="text-purple-200 font-mono">{{ customer.phone }}</strong></span>
+                </p>
+            </div>
+
+            <a href="{% url 'customer_list' %}" class="w-full sm:w-auto text-center inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-purple-950/40 transition">
+                <span>بازگشت به لیست مشتریان</span>
+                <span>↩️</span>
+            </a>
+        </div>
+
+        <!-- پرونده تایم‌لاین -->
+        <div class="card-dark p-6 md:p-8 space-y-6">
+            <div class="border-b border-purple-900/40 pb-4 flex justify-between items-center">
+                <h2 class="text-sm md:text-base font-bold text-purple-100 flex items-center gap-2">
+                    <span>📜</span>
+                    <span>تاریخچه پیگیری‌ها و تایم‌لاین</span>
+                </h2>
+                {% if timeline_events %}
+                    <span class="badge badge-indigo font-mono text-[11px]">{{ timeline_events|length }} رویداد</span>
+                {% endif %}
+            </div>
+
+            {% if timeline_events %}
+                <div class="relative border-r-2 border-purple-600/50 mr-3 pr-6 md:pr-8 space-y-6 my-2">
+                    {% for event in timeline_events %}
+                        <div class="relative group">
+                            <!-- نقطه تایم‌لاین -->
+                            <div class="absolute -right-[31px] md:-right-[39px] top-2 w-4 h-4 bg-purple-500 rounded-full border-4 border-[#130d24] group-hover:bg-purple-300 group-hover:scale-125 transition-all duration-300 shadow-md shadow-purple-500/50"></div>
+
+                            <!-- کارت رویداد -->
+                            <div class="bg-purple-950/30 p-4 rounded-2xl border border-purple-900/40 hover:border-purple-600/40 transition">
+                                <p class="text-xs md:text-sm text-purple-100 leading-relaxed font-medium">{{ event }}</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-12 text-purple-300/40 text-xs md:text-sm font-semibold">
+                    هیچ تاریخچه‌ای برای این مشتری ثبت نشده است.
+                </div>
+            {% endif %}
+        </div>
+
+    </main>
+
+</body>
+</html>
