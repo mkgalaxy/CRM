@@ -41,7 +41,7 @@ class CustomerForm(forms.ModelForm):
             'seller_name',
             'supplier',
             'interested_product',
-            'interested_products',
+            'product_code',
             'potential_amount',
             'purchase_probability',
             'status',
@@ -72,9 +72,10 @@ class CustomerForm(forms.ModelForm):
                 'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
                 'id': 'id_customer_interested_product'
             }),
-            'interested_products': forms.TextInput(attrs={
+            'product_code': forms.TextInput(attrs={
                 'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
-                'placeholder': 'توضیحات یا سایر محصولات مورد علاقه'
+                'id': 'id_product_code',
+                'placeholder': 'کد یا مدل محصول (خودکار پر می‌شود)'
             }),
             'purchase_probability': forms.NumberInput(attrs={
                 'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
@@ -396,7 +397,7 @@ class OrderForm(forms.ModelForm):
             'product_name': forms.TextInput(attrs={
                 'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
                 'id': 'id_product_name',
-                'placeholder': 'عنوان/جزئیات دقیق کالا'
+                'placeholder': 'کد / مدل محصول'
             }),
             'order_code': forms.TextInput(attrs={
                 'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',

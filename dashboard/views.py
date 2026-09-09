@@ -10,8 +10,21 @@ from django.http import JsonResponse
 
 from . import models
 from .forms import OrderForm, CustomerForm, SupplierForm, SupplierProductForm
-from .models import Customer, Order, Supplier, SupplierProduct, ActivityLog
+from .models import Customer, Order, Supplier, SupplierProduct, ActivityLog, Task
 import jdatetime
+
+
+# 🗓️ تابع کمکی جهت تولید تاریخ شمسی همراه با روز هفته برای هدر
+def get_formatted_jdate(target_jdate=None):
+    FA_WEEKDAYS = {
+        0: 'شنبه', 1: 'یکشنبه', 2: 'دوشنبه', 3: 'سه‌شنبه',
+        4: 'چهارشنبه', 5: 'پنج‌شنبه', 6: 'جمعه',
+    }
+    if not target_jdate:
+        target_jdate = jdatetime.date.today()
+    
+    weekday_str = FA_WEEKDAYS[target_jdate.weekday()]
+    return f"{weekday_str} {target_jdate.strftime('%Y/%m/%d')}"
 
 
 class CustomLoginView(LoginView):
@@ -31,16 +44,31 @@ def dashboard_home(request):
 
     try:
         j_year, j_month, j_day = map(int, current_jdate_str.split('/'))
-        g_date = jdatetime.date(j_year, j_month, j_day).togregorian()
+        active_jdate = jdatetime.date(j_year, j_month, j_day)
+        g_date = active_jdate.togregorian()
     except (ValueError, AttributeError):
+        active_jdate = today_jdate
         g_date = today_jdate.togregorian()
         current_jdate_str = today_jdate.strftime('%Y/%m/%d')
+
+    formatted_header_jdate = get_formatted_jdate(active_jdate)
 
     todays_customers = Customer.objects.filter(next_followup_date=g_date)
     todays_suppliers = Supplier.objects.filter(next_followup_date=g_date)
     overdue_customers = Customer.objects.filter(
         next_followup_date__lt=g_date
     ).exclude(status__in=['BOUGHT', 'CANCELED', 'LOST'])
+
+    g_tomorrow = g_date + timedelta(days=1)
+    
+    today_tasks = Task.objects.filter(due_date=g_date).order_by('is_completed', '-id')
+    tomorrow_tasks = Task.objects.filter(due_date=g_tomorrow).order_by('is_completed', '-id')
+    other_tasks = Task.objects.exclude(due_date__in=[g_date, g_tomorrow]).order_by('is_completed', '-id')
+    
+    pending_tasks_count = Task.objects.filter(is_completed=False).count()
+
+    tomorrow_jdate = today_jdate + jdatetime.timedelta(days=1)
+    tomorrow_jdate_str = tomorrow_jdate.strftime('%Y-%m-%d')
 
     query = request.GET.get('q')
     customer_status = request.GET.get('customer_status')
@@ -53,12 +81,12 @@ def dashboard_home(request):
         todays_customers = todays_customers.filter(
             Q(full_name__icontains=query) |
             Q(phone__icontains=query) |
-            Q(interested_products__icontains=query)
+            Q(product_code__icontains=query)
         )
         overdue_customers = overdue_customers.filter(
             Q(full_name__icontains=query) |
             Q(phone__icontains=query) |
-            Q(interested_products__icontains=query)
+            Q(product_code__icontains=query)
         )
 
     if customer_status:
@@ -92,8 +120,9 @@ def dashboard_home(request):
     ready_for_customer_count = orders_qs.filter(status='READY_FOR_CUSTOMER').count()
 
     context = {
-        'current_jdate': current_jdate_str,
+        'current_jdate': formatted_header_jdate,
         'current_jdate_input': current_jdate_str.replace('/', '-'),
+        'tomorrow_jdate_input': tomorrow_jdate_str,
         'todays_customers': todays_customers,
         'todays_suppliers': todays_suppliers,
         'overdue_customers': overdue_customers,
@@ -101,8 +130,67 @@ def dashboard_home(request):
         'ready_to_ship_count': ready_to_ship_count,
         'in_transit_count': in_transit_count,
         'ready_for_customer_count': ready_for_customer_count,
+        'today_tasks': today_tasks,
+        'tomorrow_tasks': tomorrow_tasks,
+        'other_tasks': other_tasks,
+        'pending_tasks_count': pending_tasks_count,
     }
     return render(request, 'dashboard/index.html', context)
+
+
+# 📋 ویوهای مربوط به کارهای روزانه
+@never_cache
+@login_required
+@require_POST
+def add_task(request):
+    title = request.POST.get('title')
+    due_date_str = request.POST.get('due_date')
+    target_day = request.POST.get('target_day')
+    priority = request.POST.get('priority', 'MEDIUM')
+
+    due_date = None
+    today_jdate = jdatetime.date.today()
+
+    if target_day == 'TODAY':
+        due_date = today_jdate.togregorian()
+    elif target_day == 'TOMORROW':
+        due_date = (today_jdate + jdatetime.timedelta(days=1)).togregorian()
+    elif due_date_str:
+        try:
+            clean_date = due_date_str.replace('-', '/')
+            jy, jm, jd = map(int, clean_date.split('/'))
+            due_date = jdatetime.date(jy, jm, jd).togregorian()
+        except (ValueError, AttributeError):
+            due_date = today_jdate.togregorian()
+    else:
+        due_date = today_jdate.togregorian()
+
+    if title:
+        Task.objects.create(
+            title=title,
+            due_date=due_date,
+            priority=priority
+        )
+        messages.success(request, "کار جدید با موفقیت اضافه شد.")
+    return redirect('dashboard_home')
+
+
+@never_cache
+@login_required
+def toggle_task(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+    task.is_completed = not task.is_completed
+    task.save()
+    return redirect('dashboard_home')
+
+
+@never_cache
+@login_required
+def delete_task(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+    task.delete()
+    messages.success(request, "کار مورد نظر حذف شد.")
+    return redirect('dashboard_home')
 
 
 # 👥 ویوهای مربوط به مشتریان
@@ -118,7 +206,7 @@ def customer_list(request):
         customers = customers.filter(status=status_filter)
     if search_query:
         customers = customers.filter(
-            Q(full_name__icontains=search_query) | Q(phone__icontains=search_query)
+            Q(full_name__icontains=search_query) | Q(phone__icontains=search_query) | Q(product_code__icontains=search_query)
         )
 
     for customer in customers:
@@ -138,7 +226,7 @@ def customer_list(request):
         'customers': customers,
         'search_query': search_query,
         'status_filter': status_filter,
-        'current_jdate': jdatetime.date.today().strftime('%Y/%m/%d'),
+        'current_jdate': get_formatted_jdate(),
     }
     return render(request, 'dashboard/customer_list.html', context)
 
@@ -158,7 +246,7 @@ def customer_add(request):
     context = {
         'form': form,
         'title': 'افزودن مشتری جدید',
-        'current_jdate': jdatetime.date.today().strftime('%Y/%m/%d'),
+        'current_jdate': get_formatted_jdate(),
     }
     return render(request, 'dashboard/customer_form.html', context)
 
@@ -180,7 +268,7 @@ def customer_edit(request, customer_id):
         'form': form,
         'customer': customer,
         'title': f'ویرایش اطلاعات {customer.full_name}',
-        'current_jdate': jdatetime.date.today().strftime('%Y/%m/%d'),
+        'current_jdate': get_formatted_jdate(),
     }
     return render(request, 'dashboard/customer_form.html', context)
 
@@ -216,7 +304,7 @@ def customer_detail(request, customer_id):
         'logs': logs,
         'orders': orders,
         'timeline_events': timeline_events,
-        'current_jdate': jdatetime.date.today().strftime('%Y/%m/%d'),
+        'current_jdate': get_formatted_jdate(),
     }
     return render(request, 'dashboard/customer_detail.html', context)
 
@@ -285,22 +373,21 @@ def quick_followup(request, customer_id):
     return redirect(request.META.get('HTTP_REFERER', '/'))
 
 
-# ⚡ API دریافت اطلاعات کامل مشتری جهت پر کردن خودکار فرم سفارش
 @never_cache
 @login_required
 def get_customer_detail_api(request, customer_id):
     customer = get_object_or_404(Customer, id=customer_id)
 
-    product_name = ""
-    if customer.interested_product:
-        product_name = customer.interested_product.name
-    elif customer.interested_products:
-        product_name = customer.interested_products
+    product_code = ""
+    if customer.product_code:
+        product_code = customer.product_code
+    elif customer.interested_product and customer.interested_product.code:
+        product_code = customer.interested_product.code
 
     data = {
         'supplier_id': customer.supplier.id if customer.supplier else None,
         'interested_product_id': customer.interested_product.id if customer.interested_product else None,
-        'product_name': product_name,
+        'product_name': product_code,
         'potential_amount': int(customer.potential_amount) if customer.potential_amount else 0,
     }
     return JsonResponse(data)
@@ -330,7 +417,7 @@ def order_list(request):
         'current_status': status_filter,
         'status_choices': Order.ORDER_STATUS_CHOICES,
         'search_query': search_query,
-        'current_jdate': jdatetime.date.today().strftime('%Y/%m/%d'),
+        'current_jdate': get_formatted_jdate(),
     }
     return render(request, 'dashboard/order_list.html', context)
 
@@ -354,7 +441,7 @@ def create_order(request):
     context = {
         'form': form,
         'title': 'ثبت سفارش جدید',
-        'current_jdate': jdatetime.date.today().strftime('%Y/%m/%d'),
+        'current_jdate': get_formatted_jdate(),
     }
     return render(request, 'dashboard/order_form.html', context)
 
@@ -365,7 +452,7 @@ def order_detail(request, order_id):
     order = get_object_or_404(Order, id=order_id)
     context = {
         'order': order,
-        'current_jdate': jdatetime.date.today().strftime('%Y/%m/%d'),
+        'current_jdate': get_formatted_jdate(),
     }
     return render(request, 'dashboard/order_detail.html', context)
 
@@ -388,7 +475,7 @@ def order_edit(request, order_id):
         'form': form,
         'order': order,
         'title': f'ویرایش سفارش #{order.id}',
-        'current_jdate': jdatetime.date.today().strftime('%Y/%m/%d'),
+        'current_jdate': get_formatted_jdate(),
     }
     return render(request, 'dashboard/order_form.html', context)
 
@@ -432,7 +519,7 @@ def supplier_list(request):
     context = {
         'suppliers': suppliers,
         'search_query': search_query,
-        'current_jdate': jdatetime.date.today().strftime('%Y/%m/%d'),
+        'current_jdate': get_formatted_jdate(),
     }
     return render(request, 'dashboard/supplier_list.html', context)
 
@@ -453,7 +540,7 @@ def supplier_add(request):
         'form': form,
         'product_form': SupplierProductForm(),
         'title': 'افزودن کارگاه جدید',
-        'current_jdate': jdatetime.date.today().strftime('%Y/%m/%d'),
+        'current_jdate': get_formatted_jdate(),
     }
     return render(request, 'dashboard/supplier_form.html', context)
 
@@ -490,7 +577,7 @@ def supplier_edit(request, supplier_id):
         'supplier': supplier,
         'products': supplier.products.all(),
         'title': f'ویرایش کارگاه {supplier.name}',
-        'current_jdate': jdatetime.date.today().strftime('%Y/%m/%d'),
+        'current_jdate': get_formatted_jdate(),
     }
     return render(request, 'dashboard/supplier_form.html', context)
 
@@ -505,6 +592,55 @@ def supplier_delete(request, supplier_id):
     return redirect('supplier_list')
 
 
+# --- ویوهای جدید مدیریت محصولات کارگاه ---
+
+@never_cache
+@login_required
+def get_supplier_product_detail(request, product_id):
+    """ارسال اطلاعات محصول کارگاه برای پر کردن فرم ویرایش (Modal)"""
+    product = get_object_or_404(SupplierProduct, id=product_id)
+    data = {
+        'id': product.id,
+        'name': product.name,
+        'code': product.code or '',
+        'base_price': int(product.base_price) if product.base_price else 0,
+        'description': product.description or '',
+    }
+    return JsonResponse(data)
+
+
+@never_cache
+@login_required
+@require_POST
+def edit_supplier_product(request, product_id):
+    """ویرایش کامل تمام فیلدهای محصول تولیدکننده"""
+    product = get_object_or_404(SupplierProduct, id=product_id)
+    supplier_id = product.supplier.id
+
+    name = request.POST.get('name')
+    code = request.POST.get('code')
+    base_price_raw = request.POST.get('base_price', '0')
+    description = request.POST.get('description')
+
+    clean_price = str(base_price_raw).replace(',', '').replace('،', '').strip()
+    try:
+        base_price = int(clean_price)
+    except ValueError:
+        base_price = 0
+
+    if name:
+        product.name = name
+        product.code = code
+        product.base_price = base_price
+        product.description = description
+        product.save()
+        messages.success(request, f"محصول «{product.name}» با موفقیت به‌روزرسانی شد.")
+    else:
+        messages.error(request, "نام محصول نمی‌تواند خالی باشد.")
+
+    return redirect('supplier_edit', supplier_id=supplier_id)
+
+
 @never_cache
 @login_required
 @require_POST
@@ -516,7 +652,6 @@ def delete_supplier_product(request, product_id):
     return redirect('supplier_edit', supplier_id=supplier_id)
 
 
-# API endpoint برای بارگذاری محصولات یک کارگاه با AJAX
 @never_cache
 @login_required
 def get_supplier_products(request, supplier_id):
@@ -552,6 +687,6 @@ def reports_dashboard(request):
         'total_pending': total_pending,
         'in_production_orders': Order.objects.filter(status='IN_PRODUCTION').count(),
         'ready_orders': Order.objects.filter(status='READY_TO_SHIP').count(),
-        'current_jdate': jdatetime.date.today().strftime('%Y/%m/%d'),
+        'current_jdate': get_formatted_jdate(),
     }
     return render(request, 'dashboard/reports.html', context)
