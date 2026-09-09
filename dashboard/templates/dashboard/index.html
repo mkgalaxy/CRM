@@ -38,6 +38,10 @@
             </div>
 
             <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button onclick="requestNotificationPermission()" class="bg-slate-800 hover:bg-slate-700 text-purple-300 border border-purple-800/40 px-3 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5" title="فعال‌سازی اعلانات هوشمند مرورگر">
+                    <span>🔔</span>
+                    <span class="hidden md:inline">اعلان مرورگر</span>
+                </button>
                 <button onclick="toggleFilterPanel()" class="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-purple-900/40 active:scale-95">
                     <span>🔍</span>
                     <span>جستجو و فیلتر پیشرفته</span>
@@ -124,7 +128,16 @@
             <div class="lg:col-span-4 bg-slate-900/60 p-3.5 rounded-2xl border border-purple-900/30 backdrop-blur-md shadow-xl space-y-2">
                 <p class="text-xs font-bold text-purple-300/60 px-3 py-1">📋 برنامه و کارهای امروز:</p>
 
-                <button onclick="openTab(event, 'tab-customers')" class="tab-btn active w-full p-3.5 rounded-xl text-right flex justify-between items-center transition-all duration-300 font-semibold text-sm">
+                <!-- 📝 تب جدید: کارهای من (To-Do) -->
+                <button onclick="openTab(event, 'tab-my-tasks')" class="tab-btn active w-full p-3.5 rounded-xl text-right flex justify-between items-center transition-all duration-300 font-semibold text-sm bg-gradient-to-r from-purple-900/40 to-indigo-900/40 border border-purple-600/30">
+                    <div class="flex items-center gap-2.5">
+                        <span>📝</span>
+                        <span class="text-purple-100 font-bold">کارهای من (یادداشت‌ها)</span>
+                    </div>
+                    <span class="badge badge-purple">{{ pending_tasks_count }}</span>
+                </button>
+
+                <button onclick="openTab(event, 'tab-customers')" class="tab-btn w-full p-3.5 rounded-xl text-right flex justify-between items-center transition-all duration-300 font-semibold text-sm">
                     <div class="flex items-center gap-2.5">
                         <span>📞</span>
                         <span>پیگیری‌های امروز مشتریان</span>
@@ -184,8 +197,102 @@
             <!-- ستون چپ (محتوای کارها) -->
             <div class="lg:col-span-8 bg-slate-900/60 p-5 md:p-6 rounded-2xl border border-purple-900/30 backdrop-blur-md shadow-xl min-h-[480px]">
 
+                <!-- 📝 محتوای جدید: تب «کارهای من» (To-Do) -->
+                <div id="tab-my-tasks" class="tab-content space-y-6">
+                    <div class="border-b border-purple-900/40 pb-3 flex justify-between items-center">
+                        <h2 class="text-base font-bold text-purple-100 flex items-center gap-2">📝 کارهای من (چک‌لیست روزانه)</h2>
+                        <span class="badge badge-purple">{{ pending_tasks_count }} کار باقیمانده</span>
+                    </div>
+
+                    <!-- فرم افزودن کار جدید -->
+                    <form action="{% url 'add_task' %}" method="POST" class="bg-slate-800/80 p-3.5 rounded-2xl border border-purple-800/40 space-y-3">
+                        {% csrf_token %}
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <input type="text" name="title" required placeholder="یادداشت کار جدید (مثلا: هماهنگی بار آقای مصطفایی...)" class="dark-input flex-1">
+                            <select name="target_day" class="dark-input sm:w-36">
+                                <option value="TODAY">امروز</option>
+                                <option value="TOMORROW">فردا</option>
+                            </select>
+                            <button type="submit" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition shadow-md shadow-purple-950/30 whitespace-nowrap">+ افزودن</button>
+                        </div>
+                    </form>
+
+                    <!-- بخش کارهای امروز -->
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-2 border-b border-purple-900/30 pb-1.5">
+                            <span class="text-sm font-bold text-amber-300">📌 کارهای امروز</span>
+                            <span class="text-xs text-purple-300/60">({{ today_tasks|length }} کار)</span>
+                        </div>
+                        {% if today_tasks %}
+                            <div class="space-y-2">
+                                {% for task in today_tasks %}
+                                    <div class="card-dark flex justify-between items-center p-3 gap-3 {% if task.is_completed %}opacity-50 line-through bg-slate-900/40{% endif %}">
+                                        <div class="flex items-center gap-3">
+                                            <a href="{% url 'toggle_task' task.id %}" class="w-6 h-6 rounded-lg border-2 {% if task.is_completed %}border-emerald-500 bg-emerald-500/20 text-emerald-400{% else %}border-purple-700 hover:border-purple-500{% endif %} flex items-center justify-center transition font-bold text-xs">
+                                                {% if task.is_completed %}✓{% endif %}
+                                            </a>
+                                            <span class="text-sm font-medium text-slate-100">{{ task.title }}</span>
+                                        </div>
+                                        <a href="{% url 'delete_task' task.id %}" onclick="return confirm('این کار حذف شود؟')" class="text-xs text-rose-400/80 hover:text-rose-300 transition p-1">🗑</a>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-xs text-purple-300/40 py-2">هیچ کاری برای امروز یادداشت نشده است.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- بخش کارهای فردا -->
+                    <div class="space-y-3 pt-2">
+                        <div class="flex items-center gap-2 border-b border-purple-900/30 pb-1.5">
+                            <span class="text-sm font-bold text-indigo-300">📆 کارهای فردا</span>
+                            <span class="text-xs text-purple-300/60">({{ tomorrow_tasks|length }} کار)</span>
+                        </div>
+                        {% if tomorrow_tasks %}
+                            <div class="space-y-2">
+                                {% for task in tomorrow_tasks %}
+                                    <div class="card-dark flex justify-between items-center p-3 gap-3 {% if task.is_completed %}opacity-50 line-through bg-slate-900/40{% endif %}">
+                                        <div class="flex items-center gap-3">
+                                            <a href="{% url 'toggle_task' task.id %}" class="w-6 h-6 rounded-lg border-2 {% if task.is_completed %}border-emerald-500 bg-emerald-500/20 text-emerald-400{% else %}border-purple-700 hover:border-purple-500{% endif %} flex items-center justify-center transition font-bold text-xs">
+                                                {% if task.is_completed %}✓{% endif %}
+                                            </a>
+                                            <span class="text-sm font-medium text-slate-100">{{ task.title }}</span>
+                                        </div>
+                                        <a href="{% url 'delete_task' task.id %}" onclick="return confirm('این کار حذف شود؟')" class="text-xs text-rose-400/80 hover:text-rose-300 transition p-1">🗑</a>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-xs text-purple-300/40 py-2">هیچ کاری برای فردا یادداشت نشده است.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- سایر کارها (تاریخ‌های دیگر / بدون تاریخ) -->
+                    {% if other_tasks %}
+                        <div class="space-y-3 pt-2">
+                            <div class="flex items-center gap-2 border-b border-purple-900/30 pb-1.5">
+                                <span class="text-sm font-bold text-purple-300">📅 سایر کارها</span>
+                            </div>
+                            <div class="space-y-2">
+                                {% for task in other_tasks %}
+                                    <div class="card-dark flex justify-between items-center p-3 gap-3 {% if task.is_completed %}opacity-50 line-through bg-slate-900/40{% endif %}">
+                                        <div class="flex items-center gap-3">
+                                            <a href="{% url 'toggle_task' task.id %}" class="w-6 h-6 rounded-lg border-2 {% if task.is_completed %}border-emerald-500 bg-emerald-500/20 text-emerald-400{% else %}border-purple-700 hover:border-purple-500{% endif %} flex items-center justify-center transition font-bold text-xs">
+                                                {% if task.is_completed %}✓{% endif %}
+                                            </a>
+                                            <span class="text-sm font-medium text-slate-100">{{ task.title }}</span>
+                                        </div>
+                                        <a href="{% url 'delete_task' task.id %}" onclick="return confirm('این کار حذف شود؟')" class="text-xs text-rose-400/80 hover:text-rose-300 transition p-1">🗑</a>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                </div>
+
                 <!-- ۱. پیگیری‌های مشتریان -->
-                <div id="tab-customers" class="tab-content space-y-4">
+                <div id="tab-customers" class="tab-content hidden space-y-4">
                     <div class="border-b border-purple-900/40 pb-3 flex justify-between items-center">
                         <h2 class="text-base font-bold text-purple-100 flex items-center gap-2">📞 پیگیری‌های امروز مشتریان</h2>
                         <span class="badge badge-purple">{{ todays_customers|length }} مورد</span>
@@ -271,7 +378,7 @@
                     {% endif %}
                 </div>
 
-                <!-- سایر تب‌های سفارشات -->
+                <!-- ۳. سفارشات در حال تولید -->
                 <div id="tab-production" class="tab-content hidden space-y-4">
                     <div class="border-b border-purple-900/40 pb-3 flex justify-between items-center">
                         <h2 class="text-base font-bold text-purple-100">⚙️ سفارشات در حال تولید</h2>
@@ -288,6 +395,7 @@
                     </a>
                 </div>
 
+                <!-- ۴. سفارشات آماده ارسال -->
                 <div id="tab-shipping" class="tab-content hidden space-y-4">
                     <div class="border-b border-purple-900/40 pb-3 flex justify-between items-center">
                         <h2 class="text-base font-bold text-purple-100">🚚 سفارشات آماده ارسال</h2>
@@ -304,6 +412,7 @@
                     </a>
                 </div>
 
+                <!-- ۵. سفارشات در مسیر -->
                 <div id="tab-transit" class="tab-content hidden space-y-4">
                     <div class="border-b border-purple-900/40 pb-3 flex justify-between items-center">
                         <h2 class="text-base font-bold text-purple-100">🛣️ سفارشات در مسیر</h2>
@@ -320,6 +429,7 @@
                     </a>
                 </div>
 
+                <!-- ۶. آماده تحویل به مشتری -->
                 <div id="tab-delivery" class="tab-content hidden space-y-4">
                     <div class="border-b border-purple-900/40 pb-3 flex justify-between items-center">
                         <h2 class="text-base font-bold text-purple-100">✅ آماده تحویل به مشتری</h2>
@@ -336,6 +446,7 @@
                     </a>
                 </div>
 
+                <!-- ۷. کارهای عقب‌افتاده -->
                 <div id="tab-overdue" class="tab-content hidden space-y-4">
                     <div class="border-b border-purple-900/40 pb-3 flex justify-between items-center">
                         <h2 class="text-base font-bold text-rose-400">⚠️ کارهای عقب‌افتاده</h2>
@@ -366,7 +477,7 @@
 
     </main>
 
-    <!-- مدال ثبت سریع -->
+    <!-- مدال ثبت سریع پیگیری -->
     <div id="followup-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-purple-800/50 rounded-3xl shadow-2xl shadow-purple-950/80 w-full max-w-md p-6 space-y-4">
             <div class="flex justify-between items-center border-b border-purple-900/40 pb-3">
@@ -432,7 +543,6 @@
         function openModal(customerId, customerName) {
             document.getElementById('modal-customer-name').innerText = customerName;
             const form = document.getElementById('followup-form');
-            // ✅ اصلاح آدرس اکشن فرم مطابق با urls.py برای رفع خطای 404
             form.action = `/customers/${customerId}/quick-followup/`;
             document.getElementById('followup-modal').classList.remove('hidden');
         }

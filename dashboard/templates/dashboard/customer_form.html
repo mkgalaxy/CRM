@@ -74,8 +74,8 @@
                             {{ form.interested_product }}
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-purple-200 mb-2">توضیحات محصولات مورد علاقه</label>
-                            {{ form.interested_products }}
+                            <label class="block text-xs font-bold text-purple-200 mb-2">کد / مدل محصول</label>
+                            {{ form.product_code }}
                         </div>
                     </div>
                 </div>
@@ -165,14 +165,12 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // ۱. استایل‌دهی دارک تم به تمامی فیلدها
             document.querySelectorAll('input, select, textarea').forEach(el => {
                 if (el.type !== 'hidden' && el.type !== 'submit') {
                     el.classList.add('dark-input');
                 }
             });
 
-            // ۲. جداسازی سه رقمی قیمت
             const priceInputs = document.querySelectorAll('.price-input');
             priceInputs.forEach(input => {
                 input.addEventListener('input', function(e) {
@@ -185,9 +183,9 @@
                 });
             });
 
-            // ۳. دریافت خودکار لیست محصولات با تغییر تولیدکننده
             const supplierSelect = document.getElementById('id_customer_supplier');
             const productSelect = document.getElementById('id_customer_interested_product');
+            const productCodeInput = document.getElementById('id_product_code');
 
             if (supplierSelect && productSelect) {
                 supplierSelect.addEventListener('change', function() {
@@ -202,12 +200,23 @@
                                     data.products.forEach(prod => {
                                         const option = document.createElement('option');
                                         option.value = prod.id;
-                                        option.textContent = prod.name + (prod.base_price ? ` (${parseInt(prod.base_price).toLocaleString()} تومان)` : '');
+                                        option.textContent = prod.name + (prod.code ? ` (کد: ${prod.code})` : '');
+                                        option.dataset.code = prod.code || '';
                                         productSelect.appendChild(option);
                                     });
                                 }
                             })
                             .catch(err => console.error("خطا در دریافت لیست محصولات:", err));
+                    }
+                });
+            }
+
+            // پر شدن اتوماتیک کد / مدل محصول با انتخاب محصول مورد علاقه
+            if (productSelect && productCodeInput) {
+                productSelect.addEventListener('change', function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    if (selectedOption && selectedOption.dataset.code) {
+                        productCodeInput.value = selectedOption.dataset.code;
                     }
                 });
             }

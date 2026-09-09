@@ -138,20 +138,29 @@
                             <th class="py-2.5 px-3">نام محصول</th>
                             <th class="py-2.5 px-3">کد / مدل محصول</th>
                             <th class="py-2.5 px-3">قیمت پایه (تومان)</th>
+                            <th class="py-2.5 px-3">توضیحات</th>
                             <th class="py-2.5 px-3 text-center">عملیات</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-purple-900/20">
                         {% for prod in products %}
-                        <tr>
+                        <tr class="hover:bg-purple-900/20 transition">
                             <td class="py-3 px-3 font-semibold text-purple-100">{{ prod.name }}</td>
                             <td class="py-3 px-3 text-purple-300 font-mono font-bold">{{ prod.code|default:"-" }}</td>
-                            <td class="py-3 px-3 text-emerald-400 font-bold">{{ prod.base_price|default:0 }} تومان</td>
+                            <td class="py-3 px-3 text-emerald-400 font-bold">{% if prod.base_price %}{{ prod.base_price }}{% else %}0{% endif %} تومان</td>
+                            <td class="py-3 px-3 text-purple-300/80 truncate max-w-xs">{{ prod.description|default:"-" }}</td>
                             <td class="py-3 px-3 text-center">
-                                <form method="POST" action="{% url 'delete_supplier_product' prod.id %}" class="inline">
-                                    {% csrf_token %}
-                                    <button type="submit" class="text-rose-400 hover:text-rose-300 text-xs font-bold">حذف 🗑️</button>
-                                </form>
+                                <div class="flex items-center justify-center gap-2">
+                                    <button type="button" onclick="openEditProductModal('{{ prod.id }}')" class="px-2.5 py-1 bg-blue-900/40 hover:bg-blue-800 text-blue-200 border border-blue-700/50 rounded-lg text-[11px] font-semibold transition">
+                                        ✏️ ویرایش
+                                    </button>
+                                    <form method="POST" action="{% url 'delete_supplier_product' prod.id %}" class="inline" onsubmit="return confirm('آیا از حذف این محصول اطمینان دارید؟');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="px-2.5 py-1 bg-rose-950/40 hover:bg-rose-900 text-rose-300 border border-rose-800/50 rounded-lg text-[11px] font-semibold transition">
+                                            🗑️ حذف
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
@@ -199,6 +208,50 @@
 
     </main>
 
+    <!-- 🌐 مودال ویرایش کامل محصول -->
+    <div id="edit-product-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-[#1a1235] border border-purple-800/50 p-6 rounded-2xl max-w-lg w-full shadow-2xl space-y-4">
+            <h3 class="text-sm font-bold text-purple-200 flex items-center gap-2 border-b border-purple-900/40 pb-3">
+                <span>✏️</span>
+                <span>ویرایش اطلاعات محصول</span>
+            </h3>
+
+            <form id="edit-product-form" method="POST" action="" class="space-y-4">
+                {% csrf_token %}
+                
+                <div>
+                    <label class="block text-xs font-bold text-purple-200 mb-1">نام محصول <span class="text-rose-400">*</span></label>
+                    <input type="text" name="name" id="edit-prod-name" required class="w-full">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-purple-200 mb-1">کد / مدل محصول</label>
+                        <input type="text" name="code" id="edit-prod-code" class="w-full">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-purple-200 mb-1">قیمت پایه (تومان)</label>
+                        <input type="text" name="base_price" id="edit-prod-price" class="w-full price-input">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-purple-200 mb-1">توضیحات محصول</label>
+                    <textarea name="description" id="edit-prod-desc" rows="3" class="w-full"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-3 border-t border-purple-900/40">
+                    <button type="button" onclick="closeEditProductModal()" class="px-4 py-2 bg-purple-900/40 hover:bg-purple-800 text-purple-200 rounded-xl text-xs font-semibold transition">
+                        انصراف
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition shadow-lg">
+                        ذخیره تغییرات محصول
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         document.querySelectorAll('.price-input').forEach(input => {
             input.addEventListener('input', function(e) {
@@ -210,6 +263,26 @@
                 }
             });
         });
+
+        // توابع اسکریپتی مودال ویرایش محصول
+        function openEditProductModal(productId) {
+            fetch(`/suppliers/products/${productId}/detail/`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('edit-prod-name').value = data.name;
+                    document.getElementById('edit-prod-code').value = data.code;
+                    document.getElementById('edit-prod-price').value = data.base_price ? Number(data.base_price).toLocaleString('en-US') : '';
+                    document.getElementById('edit-prod-desc').value = data.description;
+                    
+                    document.getElementById('edit-product-form').action = `/suppliers/products/${productId}/edit/`;
+                    document.getElementById('edit-product-modal').classList.remove('hidden');
+                })
+                .catch(err => console.error("خطا در دریافت اطلاعات محصول:", err));
+        }
+
+        function closeEditProductModal() {
+            document.getElementById('edit-product-modal').classList.add('hidden');
+        }
     </script>
 </body>
 </html>

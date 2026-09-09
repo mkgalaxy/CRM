@@ -15,7 +15,6 @@
 
     <main class="container mx-auto px-3 md:px-6 my-6 max-w-4xl space-y-6">
 
-        <!-- کارت سربرگ فرم -->
         <div class="card-dark flex flex-col sm:flex-row justify-between items-center gap-4">
             <h1 class="text-base md:text-xl font-black text-purple-100 flex items-center gap-2">
                 <span>{% if order %}✏️{% else %}📦{% endif %}</span>
@@ -27,7 +26,6 @@
             </a>
         </div>
 
-        <!-- پیام‌های خطای فرم -->
         {% if form.errors %}
             <div class="p-4 bg-rose-950/40 border border-rose-800/50 rounded-2xl text-rose-300 text-xs sm:text-sm font-semibold shadow-sm">
                 <p class="font-bold mb-2">لطفاً خطاهای زیر را برطرف کنید:</p>
@@ -41,7 +39,6 @@
             </div>
         {% endif %}
 
-        <!-- کارت اصلی فرم -->
         <div class="card-dark p-6 md:p-8">
             <form method="POST" id="order-form" class="space-y-6">
                 {% csrf_token %}
@@ -63,7 +60,7 @@
                     </div>
                 </div>
 
-                <!-- انتخاب محصول تولیدکننده و نام کالا -->
+                <!-- انتخاب محصول تولیدکننده و کد / مدل محصول -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label class="block text-xs font-bold text-purple-200 mb-2">
@@ -74,7 +71,7 @@
 
                     <div>
                         <label class="block text-xs font-bold text-purple-200 mb-2">
-                            عنوان / جزئیات محصول <span class="text-rose-400">*</span>
+                            کد / مدل محصول <span class="text-rose-400">*</span>
                         </label>
                         {{ form.product_name }}
                     </div>
@@ -155,7 +152,6 @@
         </div>
     </main>
 
-    <!-- مودال تأیید حذف -->
     {% if order %}
     <div id="delete-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
         <div class="bg-[#1a1235] border border-rose-900/50 p-6 rounded-2xl max-w-sm w-full shadow-2xl shadow-rose-950/40 space-y-4">
@@ -181,14 +177,12 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // ۱. افزودن استایل دارک تم به تمامی فیلدها
             document.querySelectorAll('input, select, textarea').forEach(el => {
                 if (el.type !== 'hidden' && el.type !== 'submit') {
                     el.classList.add('dark-input');
                 }
             });
 
-            // ۲. جداکننده ۳ رقمی قیمت (کاما)
             document.querySelectorAll('.price-input').forEach(input => {
                 input.addEventListener('input', function(e) {
                     let value = e.target.value.replace(/,/g, '').replace(/،/g, '').replace(/\D/g, '');
@@ -206,7 +200,6 @@
             const productNameInput = document.getElementById('id_product_name');
             const totalAmountInput = document.getElementById('id_total_amount');
 
-            // تابع کمکی برای بارگذاری لیست محصولات تولیدکننده
             function loadSupplierProducts(supplierId, targetProductId = null) {
                 if (!productSelect) return;
                 productSelect.innerHTML = '<option value="">---------</option>';
@@ -219,9 +212,9 @@
                                 data.products.forEach(prod => {
                                     const option = document.createElement('option');
                                     option.value = prod.id;
-                                    option.textContent = prod.name + (prod.base_price ? ` (${parseInt(prod.base_price).toLocaleString()} تومان)` : '');
+                                    option.textContent = prod.name + (prod.code ? ` (کد: ${prod.code})` : '');
                                     option.dataset.price = prod.base_price;
-                                    option.dataset.name = prod.name;
+                                    option.dataset.code = prod.code || prod.name;
                                     productSelect.appendChild(option);
                                 });
 
@@ -234,7 +227,7 @@
                 }
             }
 
-            // ۳. بارگذاری اتوماتیک اطلاعات مشتری (تولیدکننده، محصول، عنوان و مبلغ)
+            // پر شدن اتوماتیک فیلد کد/مدل محصول با انتخاب مشتری
             if (customerSelect) {
                 customerSelect.addEventListener('change', function() {
                     const customerId = this.value;
@@ -243,17 +236,14 @@
                     fetch(`/api/customers/${customerId}/detail/`)
                         .then(res => res.json())
                         .then(data => {
-                            // پر کردن خودکار عنوان کالا
                             if (data.product_name && productNameInput) {
-                                productNameInput.value = data.product_name;
+                                productNameInput.value = data.product_name; // پر شدن اتوماتیک کد / مدل
                             }
 
-                            // پر کردن خودکار مبلغ کل خرید
                             if (data.potential_amount && totalAmountInput) {
                                 totalAmountInput.value = Number(data.potential_amount).toLocaleString('en-US');
                             }
 
-                            // پر کردن تولیدکننده و به تبع آن بارگذاری محصولاتش
                             if (data.supplier_id && supplierSelect) {
                                 supplierSelect.value = data.supplier_id;
                                 loadSupplierProducts(data.supplier_id, data.interested_product_id);
@@ -263,20 +253,18 @@
                 });
             }
 
-            // ۴. تغییر دستی تولیدکننده توسط کاربر
             if (supplierSelect) {
                 supplierSelect.addEventListener('change', function() {
                     loadSupplierProducts(this.value);
                 });
             }
 
-            // ۵. پر کردن عنوان و مبلغ با انتخاب دستی محصول
             if (productSelect) {
                 productSelect.addEventListener('change', function() {
                     const selectedOption = this.options[this.selectedIndex];
-                    if (selectedOption && selectedOption.dataset.name) {
+                    if (selectedOption && selectedOption.dataset.code) {
                         if (productNameInput && !productNameInput.value) {
-                            productNameInput.value = selectedOption.dataset.name;
+                            productNameInput.value = selectedOption.dataset.code;
                         }
                         if (totalAmountInput && selectedOption.dataset.price > 0) {
                             totalAmountInput.value = Number(selectedOption.dataset.price).toLocaleString('en-US');
