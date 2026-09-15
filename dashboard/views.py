@@ -14,7 +14,6 @@ from .models import Customer, Order, Supplier, SupplierProduct, ActivityLog, Tas
 import jdatetime
 
 
-# 🗓️ تابع کمکی جهت تولید تاریخ شمسی همراه با روز هفته برای هدر
 def get_formatted_jdate(target_jdate=None):
     FA_WEEKDAYS = {
         0: 'شنبه', 1: 'یکشنبه', 2: 'دوشنبه', 3: 'سه‌شنبه',
@@ -138,7 +137,6 @@ def dashboard_home(request):
     return render(request, 'dashboard/index.html', context)
 
 
-# 📋 ویوهای مربوط به کارهای روزانه
 @never_cache
 @login_required
 @require_POST
@@ -193,7 +191,6 @@ def delete_task(request, task_id):
     return redirect('dashboard_home')
 
 
-# 👥 ویوهای مربوط به مشتریان
 @never_cache
 @login_required
 def customer_list(request):
@@ -372,28 +369,46 @@ def quick_followup(request, customer_id):
 
     return redirect(request.META.get('HTTP_REFERER', '/'))
 
-
 @never_cache
 @login_required
 def get_customer_detail_api(request, customer_id):
-    customer = get_object_or_404(Customer, id=customer_id)
+    customer = get_object_or_404(Customer.objects.prefetch_related('suppliers', 'interested_products__supplier'), id=customer_id)
 
-    product_code = ""
-    if customer.product_code:
-        product_code = customer.product_code
-    elif customer.interested_product and customer.interested_product.code:
-        product_code = customer.interested_product.code
+    products = []
+    suppliers_dict = {}
+
+    # دریافت محصولات مورد علاقه مشتری
+    for prod in customer.interested_products.all():
+        products.append({
+            'id': prod.id,
+            'name': prod.name,
+            'code': prod.code or prod.name,
+            'base_price': int(prod.base_price) if prod.base_price else 0,
+            'supplier_id': prod.supplier.id if prod.supplier else None,
+            'supplier_name': prod.supplier.name if prod.supplier else 'نامشخص'
+        })
+        if prod.supplier and prod.supplier.id not in suppliers_dict:
+            suppliers_dict[prod.supplier.id] = {
+                'id': prod.supplier.id,
+                'name': prod.supplier.name
+            }
+
+    # دریافت تولیدکنندگان مستقیم انتخاب شده توسط مشتری (حتی اگر محصولی از آن‌ها ثبت نشده باشد)
+    for sup in customer.suppliers.all():
+        if sup.id not in suppliers_dict:
+            suppliers_dict[sup.id] = {
+                'id': sup.id,
+                'name': sup.name
+            }
 
     data = {
-        'supplier_id': customer.supplier.id if customer.supplier else None,
-        'interested_product_id': customer.interested_product.id if customer.interested_product else None,
-        'product_name': product_code,
+        'products': products,
+        'suppliers': list(suppliers_dict.values()),
+        'product_name': customer.product_code or '',
         'potential_amount': int(customer.potential_amount) if customer.potential_amount else 0,
     }
-    return JsonResponse(data)
-
-
-# 📦 ویوهای مربوط به سفارشات
+    return JsonResponse(data)   
+    
 @never_cache
 @login_required
 def order_list(request):
@@ -491,7 +506,6 @@ def order_delete(request, order_id):
     return redirect('order_list')
 
 
-# 🏭 ویوهای مربوط به تامین‌کنندگان و کارگاه‌ها
 @never_cache
 @login_required
 def supplier_list(request):
@@ -592,12 +606,9 @@ def supplier_delete(request, supplier_id):
     return redirect('supplier_list')
 
 
-# --- ویوهای جدید مدیریت محصولات کارگاه ---
-
 @never_cache
 @login_required
 def get_supplier_product_detail(request, product_id):
-    """ارسال اطلاعات محصول کارگاه برای پر کردن فرم ویرایش (Modal)"""
     product = get_object_or_404(SupplierProduct, id=product_id)
     data = {
         'id': product.id,
@@ -613,7 +624,6 @@ def get_supplier_product_detail(request, product_id):
 @login_required
 @require_POST
 def edit_supplier_product(request, product_id):
-    """ویرایش کامل تمام فیلدهای محصول تولیدکننده"""
     product = get_object_or_404(SupplierProduct, id=product_id)
     supplier_id = product.supplier.id
 
@@ -659,7 +669,6 @@ def get_supplier_products(request, supplier_id):
     return JsonResponse({'products': list(products)})
 
 
-# 📊 داشبورد گزارشات
 @never_cache
 @login_required
 def reports_dashboard(request):
@@ -690,3 +699,14 @@ def reports_dashboard(request):
         'current_jdate': get_formatted_jdate(),
     }
     return render(request, 'dashboard/reports.html', context)
+
+
+@never_cache
+@login_required
+def get_products_by_suppliers(request):
+    supplier_ids = request.GET.getlist('supplier_ids[]')
+    if supplier_ids:
+        products = SupplierProduct.objects.filter(supplier_id__in=supplier_ids).values('id', 'name', 'code', 'supplier__name')
+    else:
+        products = SupplierProduct.objects.all().values('id', 'name', 'code', 'supplier__name')
+    return JsonResponse({'products': list(products)})

@@ -31,7 +31,6 @@ class Supplier(models.Model):
 
     @property
     def active_orders_count(self) -> int:
-        """تعداد سفارش‌های فعال (تحویل مشتری نشده)"""
         return self.orders.exclude(status='DELIVERED').count()
 
     def __str__(self):
@@ -100,24 +99,20 @@ class Customer(models.Model):
     entry_date = models.DateField(auto_now_add=True, verbose_name="تاریخ ورود")
     seller_name = models.CharField(max_length=100, blank=True, null=True, verbose_name="نام فروشنده")
 
-    supplier = models.ForeignKey(
+    # تبدیل به رابطه‌های چندبه‌چند جهت انتخاب چند تولیدکننده و چند محصول برای یک مشتری
+    suppliers = models.ManyToManyField(
         Supplier,
-        on_delete=models.SET_NULL,
-        null=True,
         blank=True,
         related_name='customers',
-        verbose_name="تولیدکننده مدنظر"
+        verbose_name="تولیدکنندگان مدنظر"
     )
-    interested_product = models.ForeignKey(
+    interested_products = models.ManyToManyField(
         SupplierProduct,
-        on_delete=models.SET_NULL,
-        null=True,
         blank=True,
         related_name='interested_customers',
-        verbose_name="محصول مورد علاقه (انتخابی)"
+        verbose_name="محصولات مورد علاقه (انتخابی)"
     )
 
-    # فیلد جدید: کد / مدل محصول (جایگزین فیلد قدیمی توضیحات)
     product_code = models.CharField(max_length=100, blank=True, null=True, verbose_name="کد / مدل محصول")
     
     potential_amount = models.DecimalField(max_digits=12, decimal_places=0, default=0, verbose_name="مبلغ احتمالی خرید (تومان)")
@@ -146,14 +141,8 @@ class Customer(models.Model):
     def status_display(self):
         return dict(self.STATUS_CHOICES).get(self.status, self.status)
 
-    def save(self, *args, **kwargs):
-        # پر کردن خودکار کد/مدل محصول در صورت انتخاب محصول تولیدکننده
-        if self.interested_product and self.interested_product.code:
-            self.product_code = self.interested_product.code
-        super().save(*args, **kwargs)
-
     def __str__(self):
-        return f"{self.full_name} ({self.phone}) - {self.get_priority_display()}"
+        return f"{self.full_name} ({self.phone})"
 
 
 # --- ۳. مدل سفارشات ---
@@ -189,7 +178,6 @@ class Order(models.Model):
         verbose_name="محصول انتخابی"
     )
     
-    # تغییر عنوان فیلد به کد / مدل محصول
     product_name = models.CharField(max_length=200, verbose_name="کد / مدل محصول")
     order_code = models.CharField(max_length=50, unique=True, verbose_name="کد/شماره سفارش")
 

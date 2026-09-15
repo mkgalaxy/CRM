@@ -43,6 +43,7 @@ urlpatterns = [
     # APIها
     path('api/suppliers/<int:supplier_id>/products/', views.get_supplier_products, name='get_supplier_products'),
     path('api/customers/<int:customer_id>/detail/', views.get_customer_detail_api, name='get_customer_detail_api'),
+    path('api/get-products-by-suppliers/', views.get_products_by_suppliers, name='get_products_by_suppliers'),
 
     # 📊 گزارشات (Reports)
     path('reports/', views.reports_dashboard, name='reports_dashboard'),

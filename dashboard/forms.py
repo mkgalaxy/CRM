@@ -6,11 +6,31 @@ import jdatetime
 class CustomerForm(forms.ModelForm):
     """فرم ثبت و ویرایش اطلاعات مشتریان"""
 
+    suppliers = forms.ModelMultipleChoiceField(
+        queryset=Supplier.objects.all(),
+        required=False,
+        widget=forms.SelectMultiple(attrs={
+            'class': 'dark-input w-full',
+            'id': 'id_customer_suppliers'
+        }),
+        label="تولیدکنندگان مدنظر"
+    )
+
+    interested_products = forms.ModelMultipleChoiceField(
+        queryset=SupplierProduct.objects.all(),
+        required=False,
+        widget=forms.SelectMultiple(attrs={
+            'class': 'dark-input w-full',
+            'id': 'id_customer_interested_products'
+        }),
+        label="محصولات مورد علاقه"
+    )
+
     last_followup_jdate = forms.CharField(
         required=False,
         widget=forms.TextInput(attrs={
             'placeholder': '1405-05-15',
-            'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500'
+            'class': 'dark-input w-full'
         }),
         label="تاریخ آخرین پیگیری (شمسی)"
     )
@@ -19,7 +39,7 @@ class CustomerForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={
             'placeholder': '1405-05-20',
-            'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500'
+            'class': 'dark-input w-full'
         }),
         label="تاریخ پیگیری بعدی (شمسی)"
     )
@@ -27,7 +47,7 @@ class CustomerForm(forms.ModelForm):
     potential_amount = forms.CharField(
         required=False,
         widget=forms.TextInput(attrs={
-            'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 price-input',
+            'class': 'dark-input w-full price-input',
             'placeholder': 'مبلغ احتمالی به تومان'
         }),
         label="مبلغ احتمالی (تومان)"
@@ -39,8 +59,8 @@ class CustomerForm(forms.ModelForm):
             'full_name',
             'phone',
             'seller_name',
-            'supplier',
-            'interested_product',
+            'suppliers',
+            'interested_products',
             'product_code',
             'potential_amount',
             'purchase_probability',
@@ -53,54 +73,46 @@ class CustomerForm(forms.ModelForm):
         ]
         widgets = {
             'full_name': forms.TextInput(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
+                'class': 'dark-input w-full',
                 'placeholder': 'مثلاً: علی محمدی'
             }),
             'phone': forms.TextInput(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
+                'class': 'dark-input w-full',
                 'placeholder': '09123456789'
             }),
             'seller_name': forms.TextInput(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
+                'class': 'dark-input w-full',
                 'placeholder': 'نام فروشنده مسئول'
             }),
-            'supplier': forms.Select(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
-                'id': 'id_customer_supplier'
-            }),
-            'interested_product': forms.Select(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
-                'id': 'id_customer_interested_product'
-            }),
             'product_code': forms.TextInput(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
+                'class': 'dark-input w-full',
                 'id': 'id_product_code',
                 'placeholder': 'کد یا مدل محصول (خودکار پر می‌شود)'
             }),
             'purchase_probability': forms.NumberInput(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
+                'class': 'dark-input w-full',
                 'placeholder': 'درصد (مثلاً 70)'
             }),
             'status': forms.Select(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500'
+                'class': 'dark-input w-full'
             }),
             'priority': forms.Select(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500'
+                'class': 'dark-input w-full'
             }),
             'followup_method': forms.Select(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500'
+                'class': 'dark-input w-full'
             }),
             'last_action': forms.TextInput(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
+                'class': 'dark-input w-full',
                 'placeholder': 'مثلاً: ارسال کاتالوگ و قیمت'
             }),
             'lost_reason': forms.Textarea(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
+                'class': 'dark-input w-full',
                 'rows': 2,
                 'placeholder': 'در صورت انصراف یا عدم خرید، دلیل آن را وارد کنید...'
             }),
             'notes': forms.Textarea(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
+                'class': 'dark-input w-full',
                 'rows': 3,
                 'placeholder': 'توضیحات و یادداشت‌های مربوط به مشتری...'
             }),
@@ -108,17 +120,6 @@ class CustomerForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        if 'supplier' in self.data:
-            try:
-                supplier_id = int(self.data.get('supplier'))
-                self.fields['interested_product'].queryset = SupplierProduct.objects.filter(supplier_id=supplier_id)
-            except (ValueError, TypeError):
-                self.fields['interested_product'].queryset = SupplierProduct.objects.none()
-        elif self.instance and self.instance.pk and getattr(self.instance, 'supplier', None):
-            self.fields['interested_product'].queryset = self.instance.supplier.products.all()
-        else:
-            self.fields['interested_product'].queryset = SupplierProduct.objects.none()
 
         if self.instance and self.instance.pk:
             if self.instance.last_followup_date:
@@ -165,6 +166,7 @@ class CustomerForm(forms.ModelForm):
 
         if commit:
             instance.save()
+            self.save_m2m()
         return instance
 
 
@@ -175,7 +177,7 @@ class SupplierForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={
             'placeholder': '1405-05-10',
-            'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500'
+            'class': 'dark-input w-full'
         }),
         label="تاریخ آخرین پیگیری (شمسی)"
     )
@@ -184,7 +186,7 @@ class SupplierForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={
             'placeholder': '1405-05-20',
-            'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500'
+            'class': 'dark-input w-full'
         }),
         label="تاریخ پیگیری بعدی کارگاه (شمسی)"
     )
@@ -201,26 +203,26 @@ class SupplierForm(forms.ModelForm):
         ]
         widgets = {
             'name': forms.TextInput(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
+                'class': 'dark-input w-full',
                 'placeholder': 'نام کارگاه یا تولیدکننده'
             }),
             'phone': forms.TextInput(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
+                'class': 'dark-input w-full',
                 'placeholder': '02112345678'
             }),
             'sales_manager': forms.TextInput(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
+                'class': 'dark-input w-full',
                 'placeholder': 'نام مسئول فروش / رابط'
             }),
             'sales_manager_phone': forms.TextInput(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
+                'class': 'dark-input w-full',
                 'placeholder': '09121234567'
             }),
             'overall_status': forms.Select(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500'
+                'class': 'dark-input w-full'
             }),
             'notes': forms.Textarea(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
+                'class': 'dark-input w-full',
                 'rows': 3,
                 'placeholder': 'توضیحات تکمیلی، آدرس یا نحوه تسویه...'
             }),
@@ -270,7 +272,7 @@ class SupplierProductForm(forms.ModelForm):
     base_price = forms.CharField(
         required=False,
         widget=forms.TextInput(attrs={
-            'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 price-input',
+            'class': 'dark-input w-full price-input',
             'placeholder': 'قیمت پایه (تومان)'
         }),
         label="قیمت پایه (تومان)"
@@ -281,15 +283,15 @@ class SupplierProductForm(forms.ModelForm):
         fields = ['name', 'code', 'base_price', 'description']
         widgets = {
             'name': forms.TextInput(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
+                'class': 'dark-input w-full',
                 'placeholder': 'نام محصول (مثلا: کاناپه ۳ نفره لمسه)'
             }),
             'code': forms.TextInput(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
+                'class': 'dark-input w-full',
                 'placeholder': 'کد یا مدل محصول'
             }),
             'description': forms.Textarea(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
+                'class': 'dark-input w-full',
                 'rows': 2,
                 'placeholder': 'توضیحات پارچه، ابعاد یا ویژگی‌های محصول...'
             }),
@@ -318,7 +320,7 @@ class OrderForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={
             'placeholder': '1405-05-01',
-            'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500'
+            'class': 'dark-input w-full'
         }),
         label="تاریخ ثبت سفارش (شمسی)"
     )
@@ -327,7 +329,7 @@ class OrderForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={
             'placeholder': '1405-05-10',
-            'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500'
+            'class': 'dark-input w-full'
         }),
         label="تاریخ ثبت به کارگاه (شمسی)"
     )
@@ -336,7 +338,7 @@ class OrderForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={
             'placeholder': '1405-05-20',
-            'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500'
+            'class': 'dark-input w-full'
         }),
         label="تاریخ احتمالی آماده شدن (شمسی)"
     )
@@ -345,7 +347,7 @@ class OrderForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={
             'placeholder': '1405-05-25',
-            'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500'
+            'class': 'dark-input w-full'
         }),
         label="تاریخ تحویل به مشتری (شمسی)"
     )
@@ -353,7 +355,7 @@ class OrderForm(forms.ModelForm):
     total_amount = forms.CharField(
         required=False,
         widget=forms.TextInput(attrs={
-            'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 price-input',
+            'class': 'dark-input w-full price-input',
             'placeholder': 'مبلغ کل به تومان'
         }),
         label="مبلغ کل (تومان)"
@@ -362,7 +364,7 @@ class OrderForm(forms.ModelForm):
     paid_amount = forms.CharField(
         required=False,
         widget=forms.TextInput(attrs={
-            'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 price-input',
+            'class': 'dark-input w-full price-input',
             'placeholder': 'مبلغ بیعانه / پرداختی به تومان'
         }),
         label="مبلغ پرداختی (تومان)"
@@ -383,31 +385,31 @@ class OrderForm(forms.ModelForm):
         ]
         widgets = {
             'customer': forms.Select(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
+                'class': 'dark-input w-full',
                 'id': 'id_customer'
             }),
             'supplier': forms.Select(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
+                'class': 'dark-input w-full',
                 'id': 'id_supplier'
             }),
             'product': forms.Select(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
+                'class': 'dark-input w-full',
                 'id': 'id_product'
             }),
             'product_name': forms.TextInput(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
+                'class': 'dark-input w-full',
                 'id': 'id_product_name',
                 'placeholder': 'کد / مدل محصول'
             }),
             'order_code': forms.TextInput(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
+                'class': 'dark-input w-full',
                 'placeholder': 'مثلاً: ORD-1001'
             }),
             'status': forms.Select(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500'
+                'class': 'dark-input w-full'
             }),
             'description': forms.Textarea(attrs={
-                'class': 'w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500',
+                'class': 'dark-input w-full',
                 'rows': 3,
                 'placeholder': 'توضیحات و یادداشت‌های سفارش...'
             }),
@@ -416,18 +418,17 @@ class OrderForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.fields['customer'].queryset = Customer.objects.all()
         self.fields['customer'].label_from_instance = lambda obj: f"{obj.full_name} ({obj.phone})"
+        self.fields['customer'].empty_label = "انتخاب مشتری..."
 
-        if 'supplier' in self.data:
-            try:
-                supplier_id = int(self.data.get('supplier'))
-                self.fields['product'].queryset = SupplierProduct.objects.filter(supplier_id=supplier_id)
-            except (ValueError, TypeError):
-                self.fields['product'].queryset = SupplierProduct.objects.none()
-        elif self.instance and self.instance.pk and getattr(self.instance, 'supplier', None):
-            self.fields['product'].queryset = self.instance.supplier.products.all()
-        else:
-            self.fields['product'].queryset = SupplierProduct.objects.none()
+        self.fields['supplier'].queryset = Supplier.objects.all()
+        self.fields['supplier'].label_from_instance = lambda obj: f"{obj.name}"
+        self.fields['supplier'].empty_label = "انتخاب کارگاه..."
+
+        self.fields['product'].queryset = SupplierProduct.objects.select_related('supplier').all()
+        self.fields['product'].label_from_instance = lambda obj: f"{obj.name} (کد: {obj.code or '---'}) - [{obj.supplier.name if obj.supplier else 'بدون کارگاه'}]"
+        self.fields['product'].empty_label = "انتخاب محصول..."
 
         if self.instance and self.instance.pk:
             if self.instance.total_amount:
