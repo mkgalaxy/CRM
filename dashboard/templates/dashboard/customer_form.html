@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% load static %}
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
@@ -307,4 +308,315 @@
         });
     </script>
 </body>
+=======
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title|default:"ثبت / ویرایش اطلاعات مشتری" }} - فروشگاه بی‌نظیر</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    
+    <!-- jQuery & Select2 CSS / JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <style>
+        /* استایل اختصاصی Dark Mode برای Select2 */
+        .select2-container--default .select2-selection--multiple,
+        .select2-container--default .select2-selection--single {
+            background-color: rgba(24, 15, 41, 0.8) !important;
+            border: 1px solid rgba(139, 92, 246, 0.3) !important;
+            border-radius: 0.75rem !important;
+            min-height: 42px !important;
+            color: #f1f5f9 !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #f1f5f9 !important;
+            line-height: 40px !important;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: #7c3aed !important;
+            border: none !important;
+            color: #ffffff !important;
+            border-radius: 0.5rem !important;
+            padding: 2px 8px !important;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+            color: #ffffff !important;
+            margin-left: 5px !important;
+        }
+        .select2-dropdown {
+            background-color: #1a102f !important;
+            border: 1px solid rgba(139, 92, 246, 0.4) !important;
+            border-radius: 0.75rem !important;
+            color: #f1f5f9 !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+        }
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #6d28d9 !important;
+            color: #ffffff !important;
+        }
+        .select2-container--default .select2-results__option[aria-selected=true] {
+            background-color: #4c1d95 !important;
+            color: #d8b4fe !important;
+        }
+        .select2-search__field {
+            background-color: #120924 !important;
+            color: #f1f5f9 !important;
+            border-radius: 0.5rem !important;
+        }
+    </style>
+</head>
+<body class="dark-purple-theme text-slate-100 min-h-screen font-sans antialiased selection:bg-purple-500 selection:text-white">
+
+    {% include "header.html" %}
+
+    <main class="container mx-auto px-3 md:px-6 my-6 max-w-5xl space-y-6">
+
+        <div class="card-dark flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-base md:text-xl font-black text-purple-100 flex items-center gap-2">
+                    <span>📝</span>
+                    <span>{{ title|default:"ثبت / ویرایش اطلاعات مشتری" }}</span>
+                </h1>
+                <p class="text-xs text-purple-300/70 mt-1">اطلاعات مشتری، وضعیت مالی و برنامه‌ریزی پیگیری‌ها را وارد نمایید.</p>
+            </div>
+            <a href="{% url 'customer_list' %}" class="w-full sm:w-auto text-center inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-purple-950/40 transition">
+                <span>بازگشت به لیست مشتریان</span>
+                <span>↩️</span>
+            </a>
+        </div>
+
+        {% if form.errors %}
+            <div class="p-4 bg-rose-950/40 border border-rose-800/50 rounded-2xl text-rose-300 text-xs font-semibold shadow-sm">
+                <p class="font-bold mb-2">لطفاً خطاهای زیر را برطرف کنید:</p>
+                <ul class="list-disc list-inside space-y-1">
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <li>{{ field }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <div class="card-dark p-6 md:p-8 space-y-6">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+
+                <!-- ۱. مشخصات فردی -->
+                <div class="bg-purple-950/30 p-5 rounded-2xl border border-purple-900/40 space-y-4">
+                    <h2 class="font-bold text-purple-200 border-b border-purple-900/40 pb-2 text-xs md:text-sm flex items-center gap-2">
+                        <span>👤</span>
+                        <span>مشخصات فردی و مسئول</span>
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-purple-200 mb-2">نام و نام خانوادگی <span class="text-rose-400">*</span></label>
+                            {{ form.full_name }}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-purple-200 mb-2">شماره تماس <span class="text-rose-400">*</span></label>
+                            {{ form.phone }}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-purple-200 mb-2">نام فروشنده مسئول</label>
+                            {{ form.seller_name }}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-purple-200 mb-2">تولیدکنندگان مدنظر (چند انتخابی)</label>
+                            {{ form.suppliers }}
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-purple-200 mb-2">محصولات مورد علاقه (فیلتر بر اساس تولیدکننده)</label>
+                            {{ form.interested_products }}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-purple-200 mb-2">کد / مدل محصول</label>
+                            {{ form.product_code }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ۲. ارزیابی مالی و وضعیت -->
+                <div class="bg-purple-950/30 p-5 rounded-2xl border border-purple-900/40 space-y-4">
+                    <h2 class="font-bold text-purple-200 border-b border-purple-900/40 pb-2 text-xs md:text-sm flex items-center gap-2">
+                        <span>📊</span>
+                        <span>وضعیت و ارزیابی مالی</span>
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-purple-200 mb-2">وضعیت مشتری</label>
+                            {{ form.status }}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-purple-200 mb-2">اولویت</label>
+                            {{ form.priority }}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-purple-200 mb-2">مبلغ احتمالی (تومان)</label>
+                            {{ form.potential_amount }}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-purple-200 mb-2">احتمال خرید (درصد)</label>
+                            {{ form.purchase_probability }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ۳. زمان‌بندی پیگیری‌ها -->
+                <div class="bg-purple-950/30 p-5 rounded-2xl border border-purple-900/40 space-y-4">
+                    <h2 class="font-bold text-purple-200 border-b border-purple-900/40 pb-2 text-xs md:text-sm flex items-center gap-2">
+                        <span>📅</span>
+                        <span>زمان‌بندی و پیگیری‌ها</span>
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-purple-200 mb-2">روش پیگیری</label>
+                            {{ form.followup_method }}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-purple-200 mb-2">آخرین اقدام انجام شده</label>
+                            {{ form.last_action }}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-purple-200 mb-2">تاریخ آخرین پیگیری (شمسی)</label>
+                            {{ form.last_followup_jdate }}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-purple-200 mb-2">تاریخ پیگیری بعدی (شمسی)</label>
+                            {{ form.next_followup_jdate }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ۴. یادداشت و انصراف -->
+                <div class="bg-purple-950/30 p-5 rounded-2xl border border-purple-900/40 space-y-4">
+                    <h2 class="font-bold text-purple-200 border-b border-purple-900/40 pb-2 text-xs md:text-sm flex items-center gap-2">
+                        <span>📝</span>
+                        <span>توضیحات و دلایل عدم خرید</span>
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-purple-200 mb-2">توضیحات و یادداشت‌ها</label>
+                            {{ form.notes }}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-purple-200 mb-2">دلیل عدم خرید / انصراف</label>
+                            {{ form.lost_reason }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-5 border-t border-purple-900/40">
+                    <a href="{% url 'customer_list' %}" class="px-5 py-2.5 text-xs font-bold text-purple-300 hover:text-white rounded-xl hover:bg-purple-900/40 transition">
+                        انصراف
+                    </a>
+                    <button type="submit" class="px-6 py-2.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-500 rounded-xl shadow-lg shadow-purple-950/50 transition flex items-center gap-1.5">
+                        <span>💾</span>
+                        <span>ذخیره اطلاعات مشتری</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        $(document).ready(function() {
+            const $suppliersSelect = $('#id_customer_suppliers').select2({
+                placeholder: 'انتخاب یک یا چند تولیدکننده...',
+                allowClear: true,
+                width: '100%',
+                dir: "rtl"
+            });
+
+            const $productsSelect = $('#id_customer_interested_products').select2({
+                placeholder: 'انتخاب یک یا چند محصول...',
+                allowClear: true,
+                width: '100%',
+                dir: "rtl"
+            });
+
+            let currentProductsData = {};
+
+            $suppliersSelect.on('change', function() {
+                const selectedSupplierIds = $(this).val();
+
+                $.ajax({
+                    url: "{% url 'get_products_by_suppliers' %}",
+                    data: {
+                        'supplier_ids': selectedSupplierIds
+                    },
+                    success: function(response) {
+                        const previousSelectedProducts = $productsSelect.val() || [];
+                        $productsSelect.empty();
+                        currentProductsData = {};
+
+                        response.products.forEach(function(prod) {
+                            const prodCode = prod.code ? prod.code : prod.name;
+                            currentProductsData[prod.id] = prodCode;
+                            
+                            const optionText = `${prod.name} (${prod.supplier__name}) ${prod.code ? '- کد: ' + prod.code : ''}`;
+                            const isSelected = previousSelectedProducts.includes(prod.id.toString());
+                            
+                            const newOption = new Option(optionText, prod.id, isSelected, isSelected);
+                            $productsSelect.append(newOption);
+                        });
+
+                        $productsSelect.trigger('change.select2');
+                    }
+                });
+            });
+
+            $productsSelect.on('change', function() {
+                const selectedProductIds = $(this).val() || [];
+                let codes = [];
+
+                selectedProductIds.forEach(function(id) {
+                    if (currentProductsData[id]) {
+                        codes.push(currentProductsData[id]);
+                    } else {
+                        const optionText = $productsSelect.find(`option[value="${id}"]`).text();
+                        if (optionText) {
+                            codes.push(optionText.trim());
+                        }
+                    }
+                });
+
+                if (codes.length > 0) {
+                    $('#id_product_code').val(codes.join(' - '));
+                }
+            });
+
+            document.querySelectorAll('input, select, textarea').forEach(el => {
+                if (
+                    el.type !== 'hidden' && 
+                    el.type !== 'submit' && 
+                    !el.classList.contains('select2-search__field') &&
+                    !el.classList.contains('select2-hidden-accessible')
+                ) {
+                    el.classList.add('dark-input');
+                }
+            });
+
+            const priceInputs = document.querySelectorAll('.price-input');
+            priceInputs.forEach(input => {
+                input.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value) {
+                        e.target.value = Number(value).toLocaleString('en-US');
+                    } else {
+                        e.target.value = '';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+>>>>>>> 332a984f4584bdfa71fb5a9715ca592181556e4e
 </html>
