@@ -8,6 +8,53 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
     <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    
+    <!-- jQuery & Select2 CSS / JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <style>
+        .select2-container--default .select2-selection--single,
+        .select2-container--default .select2-selection--multiple {
+            background-color: rgba(24, 15, 41, 0.8) !important;
+            border: 1px solid rgba(139, 92, 246, 0.3) !important;
+            border-radius: 0.75rem !important;
+            min-height: 42px !important;
+            color: #f1f5f9 !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #f1f5f9 !important;
+            line-height: 40px !important;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: #6d28d9 !important;
+            border: 1px solid #7c3aed !important;
+            color: #ffffff !important;
+            border-radius: 0.5rem !important;
+            padding: 2px 8px !important;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+            color: #f1f5f9 !important;
+            margin-left: 5px !important;
+        }
+        .select2-dropdown {
+            background-color: #1a102f !important;
+            border: 1px solid rgba(139, 92, 246, 0.4) !important;
+            border-radius: 0.75rem !important;
+            color: #f1f5f9 !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+        }
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #6d28d9 !important;
+            color: #ffffff !important;
+        }
+        .select2-search__field {
+            background-color: #120924 !important;
+            color: #f1f5f9 !important;
+            border-radius: 0.5rem !important;
+        }
+    </style>
 </head>
 <body class="dark-purple-theme text-slate-100 min-h-screen font-sans antialiased selection:bg-purple-500 selection:text-white pb-10">
 
@@ -15,7 +62,6 @@
 
     <main class="container mx-auto px-3 md:px-6 my-6 max-w-4xl space-y-6">
 
-        <!-- کارت سربرگ فرم -->
         <div class="card-dark flex flex-col sm:flex-row justify-between items-center gap-4">
             <h1 class="text-base md:text-xl font-black text-purple-100 flex items-center gap-2">
                 <span>{% if order %}✏️{% else %}📦{% endif %}</span>
@@ -27,7 +73,6 @@
             </a>
         </div>
 
-        <!-- پیام‌های خطای فرم -->
         {% if form.errors %}
             <div class="p-4 bg-rose-950/40 border border-rose-800/50 rounded-2xl text-rose-300 text-xs sm:text-sm font-semibold shadow-sm">
                 <p class="font-bold mb-2">لطفاً خطاهای زیر را برطرف کنید:</p>
@@ -41,12 +86,11 @@
             </div>
         {% endif %}
 
-        <!-- کارت اصلی فرم -->
         <div class="card-dark p-6 md:p-8">
             <form method="POST" id="order-form" class="space-y-6">
                 {% csrf_token %}
 
-                <!-- انتخاب مشتری و کارگاه -->
+                <!-- انتخاب مشتری و کارگاه (چندانتخابی) -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label class="block text-xs font-bold text-purple-200 mb-2">
@@ -57,24 +101,34 @@
 
                     <div>
                         <label class="block text-xs font-bold text-purple-200 mb-2">
-                            تولیدکننده / کارگاه
+                            تولیدکننده / کارگاه (چندانتخابی)
                         </label>
-                        {{ form.supplier }}
+                        <!-- اضافه کردن ویژگی multiple برای پشتیبانی از چند تولیدکننده -->
+                        <select name="{{ form.supplier.name }}" id="id_supplier" multiple="multiple" class="w-full">
+                            {% for x, y in form.supplier.field.choices %}
+                                {% if x %}<option value="{{ x }}">{{ y }}</option>{% endif %}
+                            {% endfor %}
+                        </select>
                     </div>
                 </div>
 
-                <!-- انتخاب محصول تولیدکننده و نام کالا -->
+                <!-- انتخاب محصول تولیدکننده و کد / مدل محصول (چندانتخابی) -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label class="block text-xs font-bold text-purple-200 mb-2">
-                            محصول تولیدکننده
+                            محصول انتخابی مشتری (چندانتخابی)
                         </label>
-                        {{ form.product }}
+                        <!-- اضافه کردن ویژگی multiple برای پشتیبانی از چند محصول -->
+                        <select name="{{ form.product.name }}" id="id_product" multiple="multiple" class="w-full">
+                            {% for x, y in form.product.field.choices %}
+                                {% if x %}<option value="{{ x }}">{{ y }}</option>{% endif %}
+                            {% endfor %}
+                        </select>
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-purple-200 mb-2">
-                            عنوان / جزئیات محصول <span class="text-rose-400">*</span>
+                            کد / مدل محصول <span class="text-rose-400">*</span>
                         </label>
                         {{ form.product_name }}
                     </div>
@@ -155,136 +209,133 @@
         </div>
     </main>
 
-    <!-- مودال تأیید حذف -->
-    {% if order %}
-    <div id="delete-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-[#1a1235] border border-rose-900/50 p-6 rounded-2xl max-w-sm w-full shadow-2xl shadow-rose-950/40 space-y-4">
-            <h3 class="text-base font-bold text-rose-400 flex items-center gap-2">
-                <span>⚠️</span>
-                <span>تأیید حذف سفارش</span>
-            </h3>
-            <p class="text-xs text-purple-200 leading-relaxed">آیا از حذف دائم این سفارش اطمینان دارید؟ این عملیات غیرقابل بازگشت است.</p>
-            <div class="flex justify-end gap-3 pt-2">
-                <button type="button" onclick="document.getElementById('delete-modal').classList.add('hidden')" class="px-4 py-2 bg-purple-900/40 hover:bg-purple-800 text-purple-200 rounded-xl text-xs font-semibold transition">
-                    انصراف
-                </button>
-                <form method="POST" action="{% url 'order_delete' order.id %}">
-                    {% csrf_token %}
-                    <button type="submit" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-rose-950/50">
-                        حذف نهایی
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // ۱. افزودن استایل دارک تم به تمامی فیلدها
-            document.querySelectorAll('input, select, textarea').forEach(el => {
-                if (el.type !== 'hidden' && el.type !== 'submit') {
-                    el.classList.add('dark-input');
-                }
-            });
+    $(document).ready(function() {
+        const customerSelect = $('#id_customer').select2({
+            placeholder: 'جستجو و انتخاب مشتری...',
+            allowClear: true,
+            width: '100%',
+            dir: "rtl"
+        });
 
-            // ۲. جداکننده ۳ رقمی قیمت (کاما)
-            document.querySelectorAll('.price-input').forEach(input => {
-                input.addEventListener('input', function(e) {
-                    let value = e.target.value.replace(/,/g, '').replace(/،/g, '').replace(/\D/g, '');
-                    if (value) {
-                        e.target.value = Number(value).toLocaleString('en-US');
+        const supplierSelect = $('#id_supplier').select2({
+            placeholder: 'انتخاب کارگاه‌ها...',
+            width: '100%',
+            dir: "rtl"
+        });
+
+        const productSelect = $('#id_product').select2({
+            placeholder: 'انتخاب محصولات...',
+            width: '100%',
+            dir: "rtl"
+        });
+
+        const productNameInput = document.getElementById('id_product_name');
+        const totalAmountInput = document.getElementById('id_total_amount');
+
+        // تابع دریافت و انتخاب خودکار تمام تولیدکنندگان و محصولاتِ مشتری به صورت گروهی
+        function handleCustomerChange(customerId) {
+            if (!customerId) return;
+
+            $.ajax({
+                url: `/api/customers/${customerId}/detail/`,
+                method: 'GET',
+                success: function(data) {
+                    // ۱. پر کردن و انتخاب خودکار *تمام* تولیدکنندگان مربوط به این مشتری
+                    supplierSelect.empty();
+                    let supplierIds = [];
+                    if (data.suppliers && data.suppliers.length > 0) {
+                        data.suppliers.forEach(sup => {
+                            const supOption = new Option(sup.name, sup.id, true, true);
+                            supplierSelect.append(supOption);
+                            supplierIds.push(sup.id.toString());
+                        });
+                        supplierSelect.val(supplierIds).trigger('change.select2');
                     } else {
-                        e.target.value = '';
+                        supplierSelect.val(null).trigger('change.select2');
                     }
-                });
-            });
 
-            const customerSelect = document.getElementById('id_customer');
-            const supplierSelect = document.getElementById('id_supplier');
-            const productSelect = document.getElementById('id_product');
-            const productNameInput = document.getElementById('id_product_name');
-            const totalAmountInput = document.getElementById('id_total_amount');
-
-            // تابع کمکی برای بارگذاری لیست محصولات تولیدکننده
-            function loadSupplierProducts(supplierId, targetProductId = null) {
-                if (!productSelect) return;
-                productSelect.innerHTML = '<option value="">---------</option>';
-
-                if (supplierId) {
-                    fetch(`/api/suppliers/${supplierId}/products/`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.products) {
-                                data.products.forEach(prod => {
-                                    const option = document.createElement('option');
-                                    option.value = prod.id;
-                                    option.textContent = prod.name + (prod.base_price ? ` (${parseInt(prod.base_price).toLocaleString()} تومان)` : '');
-                                    option.dataset.price = prod.base_price;
-                                    option.dataset.name = prod.name;
-                                    productSelect.appendChild(option);
-                                });
-
-                                if (targetProductId) {
-                                    productSelect.value = targetProductId;
-                                }
+                    // ۲. پر کردن و انتخاب خودکار *تمام* محصولات مربوط به این مشتری
+                    productSelect.empty();
+                    let productIds = [];
+                    let allCodes = [];
+                    if (data.products && data.products.length > 0) {
+                        data.products.forEach(prod => {
+                            const option = new Option(
+                                `${prod.name} (کد: ${prod.code || '---'}) - [کارگاه: ${prod.supplier_name}]`,
+                                prod.id,
+                                true,
+                                true
+                            );
+                            $(option).attr('data-code', prod.code || prod.name);
+                            productSelect.append(option);
+                            productIds.push(prod.id.toString());
+                            if (prod.code || prod.name) {
+                                allCodes.push(prod.code || prod.name);
                             }
-                        })
-                        .catch(err => console.error("خطا در دریافت لیست محصولات:", err));
+                        });
+                        productSelect.val(productIds).trigger('change.select2');
+                        
+                        // ۳. قرار دادن همه کدهای محصول در فیلد متنی کد محصول (به صورت لیستی با کاما)
+                        if (productNameInput) {
+                            productNameInput.value = allCodes.join(' ، ');
+                        }
+                    } else {
+                        productSelect.val(null).trigger('change.select2');
+                        if (productNameInput) {
+                            productNameInput.value = data.product_name || '';
+                        }
+                    }
+
+                    // ۴. پر کردن مبلغ کل در صورت وجود
+                    if (data.potential_amount && totalAmountInput && (!totalAmountInput.value || totalAmountInput.value === '0')) {
+                        totalAmountInput.value = Number(data.potential_amount).toLocaleString('en-US');
+                    }
                 }
-            }
+            });
+        }
 
-            // ۳. بارگذاری اتوماتیک اطلاعات مشتری (تولیدکننده، محصول، عنوان و مبلغ)
-            if (customerSelect) {
-                customerSelect.addEventListener('change', function() {
-                    const customerId = this.value;
-                    if (!customerId) return;
+        customerSelect.on('select2:select', function(e) {
+            handleCustomerChange($(this).val());
+        });
 
-                    fetch(`/api/customers/${customerId}/detail/`)
-                        .then(res => res.json())
-                        .then(data => {
-                            // پر کردن خودکار عنوان کالا
-                            if (data.product_name && productNameInput) {
-                                productNameInput.value = data.product_name;
-                            }
-
-                            // پر کردن خودکار مبلغ کل خرید
-                            if (data.potential_amount && totalAmountInput) {
-                                totalAmountInput.value = Number(data.potential_amount).toLocaleString('en-US');
-                            }
-
-                            // پر کردن تولیدکننده و به تبع آن بارگذاری محصولاتش
-                            if (data.supplier_id && supplierSelect) {
-                                supplierSelect.value = data.supplier_id;
-                                loadSupplierProducts(data.supplier_id, data.interested_product_id);
-                            }
-                        })
-                        .catch(err => console.error("خطا در دریافت اطلاعات مشتری:", err));
-                });
-            }
-
-            // ۴. تغییر دستی تولیدکننده توسط کاربر
-            if (supplierSelect) {
-                supplierSelect.addEventListener('change', function() {
-                    loadSupplierProducts(this.value);
-                });
-            }
-
-            // ۵. پر کردن عنوان و مبلغ با انتخاب دستی محصول
-            if (productSelect) {
-                productSelect.addEventListener('change', function() {
-                    const selectedOption = this.options[this.selectedIndex];
-                    if (selectedOption && selectedOption.dataset.name) {
-                        if (productNameInput && !productNameInput.value) {
-                            productNameInput.value = selectedOption.dataset.name;
-                        }
-                        if (totalAmountInput && selectedOption.dataset.price > 0) {
-                            totalAmountInput.value = Number(selectedOption.dataset.price).toLocaleString('en-US');
-                        }
-                    }
-                });
+        // مدیریت تغییرات دستی محصولات و آپدیت خودکار کدها
+        productSelect.on('change', function(e) {
+            let selectedCodes = [];
+            $(this).find(':selected').each(function() {
+                const code = $(this).attr('data-code');
+                if (code) {
+                    selectedCodes.push(code);
+                }
+            });
+            if (productNameInput && selectedCodes.length > 0) {
+                productNameInput.value = selectedCodes.join(' ، ');
             }
         });
+
+        // استایل‌دهی به المان‌های فرم
+        document.querySelectorAll('input, select, textarea').forEach(el => {
+            if (
+                el.type !== 'hidden' && 
+                el.type !== 'submit' && 
+                !el.classList.contains('select2-search__field') &&
+                !el.classList.contains('select2-hidden-accessible')
+            ) {
+                el.classList.add('dark-input');
+            }
+        });
+
+        document.querySelectorAll('.price-input').forEach(input => {
+            input.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value) {
+                    e.target.value = Number(value).toLocaleString('en-US');
+                } else {
+                    e.target.value = '';
+                }
+            });
+        });
+    });
     </script>
 </body>
 </html>

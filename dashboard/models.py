@@ -31,7 +31,6 @@ class Supplier(models.Model):
 
     @property
     def active_orders_count(self) -> int:
-        """تعداد سفارش‌های فعال (تحویل مشتری نشده)"""
         return self.orders.exclude(status='DELIVERED').count()
 
     def __str__(self):
@@ -57,7 +56,7 @@ class SupplierProduct(models.Model):
     description = models.TextField(blank=True, null=True, verbose_name="توضیحات محصول")
 
     def __str__(self):
-        return f"{self.name} ({self.supplier.name})"
+        return f"{self.name} - کد: {self.code or '---'} ({self.supplier.name})"
 
 
 # --- ۲. مدل مشتریان ---
@@ -100,25 +99,22 @@ class Customer(models.Model):
     entry_date = models.DateField(auto_now_add=True, verbose_name="تاریخ ورود")
     seller_name = models.CharField(max_length=100, blank=True, null=True, verbose_name="نام فروشنده")
 
-    # اضافه شدن فیلدهای جدید جهت رفع خطای FieldError
-    supplier = models.ForeignKey(
+    # تبدیل به رابطه‌های چندبه‌چند جهت انتخاب چند تولیدکننده و چند محصول برای یک مشتری
+    suppliers = models.ManyToManyField(
         Supplier,
-        on_delete=models.SET_NULL,
-        null=True,
         blank=True,
         related_name='customers',
-        verbose_name="تولیدکننده مدنظر"
+        verbose_name="تولیدکنندگان مدنظر"
     )
-    interested_product = models.ForeignKey(
+    interested_products = models.ManyToManyField(
         SupplierProduct,
-        on_delete=models.SET_NULL,
-        null=True,
         blank=True,
         related_name='interested_customers',
-        verbose_name="محصول مورد علاقه (انتخابی)"
+        verbose_name="محصولات مورد علاقه (انتخابی)"
     )
 
-    interested_products = models.CharField(max_length=255, blank=True, null=True, verbose_name="محصولات مورد علاقه (متنی)")
+    product_code = models.CharField(max_length=100, blank=True, null=True, verbose_name="کد / مدل محصول")
+    
     potential_amount = models.DecimalField(max_digits=12, decimal_places=0, default=0, verbose_name="مبلغ احتمالی خرید (تومان)")
     purchase_probability = models.IntegerField(default=50, verbose_name="احتمال خرید (درصد)")
 
@@ -128,6 +124,9 @@ class Customer(models.Model):
     last_action = models.CharField(max_length=255, blank=True, null=True, verbose_name="آخرین اقدام انجام شده")
     last_followup_date = models.DateField(blank=True, null=True, verbose_name="تاریخ آخرین پیگیری")
     next_followup_date = models.DateField(blank=True, null=True, verbose_name="تاریخ پیگیری بعدی")
+    
+    followup_time = models.CharField(max_length=10, blank=True, null=True, verbose_name="ساعت یادآوری بعدی (HH:MM)")
+
     followup_method = models.CharField(
         max_length=50,
         choices=FOLLOWUP_METHOD_CHOICES,
@@ -138,8 +137,12 @@ class Customer(models.Model):
     lost_reason = models.TextField(blank=True, null=True, verbose_name="دلیل نخریدن / انصراف")
     notes = models.TextField(blank=True, null=True, verbose_name="توضیحات")
 
+    @property
+    def status_display(self):
+        return dict(self.STATUS_CHOICES).get(self.status, self.status)
+
     def __str__(self):
-        return f"{self.full_name} ({self.phone}) - {self.get_priority_display()}"
+        return f"{self.full_name} ({self.phone})"
 
 
 # --- ۳. مدل سفارشات ---
@@ -174,10 +177,10 @@ class Order(models.Model):
         related_name='orders',
         verbose_name="محصول انتخابی"
     )
-    product_name = models.CharField(max_length=200, verbose_name="نام کالا/توضیحات محصول")
+    
+    product_name = models.CharField(max_length=200, verbose_name="کد / مدل محصول")
     order_code = models.CharField(max_length=50, unique=True, verbose_name="کد/شماره سفارش")
 
-    # تاریخ‌های مراحل مختلف سفارش
     order_date = models.DateField(blank=True, null=True, verbose_name="تاریخ ثبت سفارش")
     supplier_order_date = models.DateField(blank=True, null=True, verbose_name="تاریخ ثبت برای تولیدکننده")
     expected_ready_date = models.DateField(blank=True, null=True, verbose_name="تاریخ احتمالی آماده شدن")
@@ -193,7 +196,6 @@ class Order(models.Model):
         verbose_name="وضعیت سفارش"
     )
 
-    # مباحث مالی (واحد تومان)
     total_amount = models.DecimalField(max_digits=12, decimal_places=0, default=0, verbose_name="مبلغ سفارش (تومان)")
     paid_amount = models.DecimalField(max_digits=12, decimal_places=0, default=0, verbose_name="مبلغ پرداخت شده (تومان)")
 
@@ -201,12 +203,10 @@ class Order(models.Model):
 
     @property
     def remaining_amount(self):
-        """محاسبه مبلغ باقی‌مانده به تومان"""
         return max(0, self.total_amount - self.paid_amount)
 
     @property
     def remaining_balance(self):
-        """ویژگی همگام با متغیرهای قالب‌ها جهت نمایش مبلغ باقی‌مانده فرمت‌شده"""
         rem = self.remaining_amount
         return f"{int(rem):,}" if rem > 0 else "0"
 
@@ -218,23 +218,11 @@ class Order(models.Model):
     def formatted_paid_amount(self):
         return f"{int(self.paid_amount):,}" if self.paid_amount else "0"
 
-    @property
-    def days_since_order(self) -> int:
-        if self.order_date:
-            return (timezone.now().date() - self.order_date).days
-        return 0
-
-    @property
-    def days_since_supplier_order(self) -> int:
-        if self.supplier_order_date:
-            return (timezone.now().date() - self.supplier_order_date).days
-        return self.days_since_order
-
     def __str__(self):
         return f"سفارش {self.order_code} - {self.customer.full_name}"
 
 
-# --- ۴. مدل تایم‌لاین و ثبت تاریخچه اقدام‌ها (Timeline) ---
+# --- ۴. مدل تایم‌لاین ---
 class ActivityLog(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='logs', verbose_name="مشتری")
     date = models.DateTimeField(auto_now_add=True, verbose_name="تاریخ و زمان")
@@ -243,3 +231,27 @@ class ActivityLog(models.Model):
 
     def __str__(self):
         return f"{self.customer.full_name} - {self.date.strftime('%Y-%m-%d %H:%M')}"
+
+
+# --- ۵. مدل وظایف (Task) ---
+class Task(models.Model):
+    TASK_PRIORITY_CHOICES = [
+        ('HIGH', '🔴 بالا'),
+        ('MEDIUM', '🟡 متوسط'),
+        ('LOW', '🟢 پایین'),
+    ]
+
+    title = models.CharField(max_length=255, verbose_name="عنوان کار / یادآوری")
+    due_date = models.DateField(blank=True, null=True, verbose_name="تاریخ سررسید")
+    due_time = models.CharField(max_length=10, blank=True, null=True, verbose_name="ساعت (HH:MM)")
+    priority = models.CharField(
+        max_length=10,
+        choices=TASK_PRIORITY_CHOICES,
+        default='MEDIUM',
+        verbose_name="اولویت"
+    )
+    is_completed = models.BooleanField(default=False, verbose_name="انجام شده؟")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاریخ ثبت")
+
+    def __str__(self):
+        return f"{self.title} - {'✅' if self.is_completed else '⏳'}"
