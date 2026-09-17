@@ -1,1 +1,0 @@
-source /home/jabiqdnv/virtualenv/binazir/3.11/bin/activate && cd /home/jabiqdnv/binazir
