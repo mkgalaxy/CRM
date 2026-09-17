@@ -1,0 +1,325 @@
+@import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
+
+/* ==========================================================================
+   ۱. تنظیمات پایه و تم دارک بنفش
+   ========================================================================== */
+:root {
+  --bg-dark-base: #0b0717;
+  --bg-dark-surface: #130d24;
+  --bg-dark-card: rgba(24, 17, 43, 0.7);
+  --border-purple: rgba(139, 92, 246, 0.2);
+  --border-purple-glow: rgba(168, 85, 247, 0.4);
+  --accent-purple: #9333ea;
+  --accent-indigo: #6366f1;
+  --text-main: #f1f5f9;
+  --text-muted: #a78bfa;
+}
+
+body.dark-purple-theme {
+  font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-dark-base);
+  background-image:
+    radial-gradient(at 0% 0%, rgba(88, 28, 135, 0.25) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(49, 46, 129, 0.2) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.5) 0px, transparent 100%);
+  background-attachment: fixed;
+  color: var(--text-main);
+  direction: rtl;
+  text-align: right;
+  margin: 0;
+  padding: 0;
+}
+
+/* ==========================================================================
+   ۲. استایل اختصاصی هدر (کاملاً راست‌چین و ریسپانسیو)
+   ========================================================================== */
+.main-navbar {
+  background-color: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid rgba(88, 28, 135, 0.4);
+  box-shadow: 0 10px 30px rgba(15, 3, 25, 0.5);
+  width: 100%;
+}
+
+.main-navbar-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  direction: rtl;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.brand-icon {
+  padding: 0.5rem;
+  background-color: rgba(147, 51, 234, 0.1);
+  border: 1px solid rgba(147, 51, 234, 0.2);
+  border-radius: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.navbar-brand:hover .brand-icon {
+  transform: scale(1.05);
+}
+
+.brand-title {
+  font-size: 1.125rem;
+  font-weight: 900;
+  background: linear-gradient(to left, #e9d5ff, #c084fc, #a5b4fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.navbar-date-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  background-color: rgba(24, 11, 46, 0.6);
+  color: #e9d5ff;
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(107, 33, 168, 0.4);
+}
+
+.date-pulse-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: #34d399;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.navbar-logout-form {
+  display: inline;
+  margin: 0;
+}
+
+.navbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 0.25s ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-purple {
+  background-color: rgba(88, 28, 135, 0.3);
+  color: #d8b4fe;
+  border: 1px solid rgba(126, 34, 206, 0.4);
+}
+.btn-purple:hover {
+  background-color: #9333ea;
+  color: #ffffff;
+}
+
+.btn-dark {
+  background-color: rgba(30, 41, 59, 0.6);
+  color: #e2e8f0;
+  border: 1px solid rgba(107, 33, 168, 0.3);
+}
+.btn-dark:hover {
+  background-color: rgba(88, 28, 135, 0.4);
+  color: #ffffff;
+}
+
+.btn-rose {
+  background-color: rgba(244, 63, 94, 0.1);
+  color: #fb7185;
+  border: 1px solid rgba(244, 63, 94, 0.2);
+}
+.btn-rose:hover {
+  background-color: #e11d48;
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   ۳. دکمه‌های عمومی، کارت‌ها و فیلدهای فرم
+   ========================================================================== */
+.quick-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 0.75rem;
+  border-width: 1px;
+  backdrop-filter: blur(8px);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  text-decoration: none;
+}
+
+.quick-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.25);
+}
+
+.btn-action {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.4rem 0.85rem;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  text-decoration: none;
+}
+
+.btn-action:active {
+  transform: scale(0.96);
+}
+
+.card-dark {
+  background-color: var(--bg-dark-card);
+  border: 1px solid var(--border-purple);
+  border-radius: 1rem;
+  padding: 1rem;
+  backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.card-dark:hover {
+  border-color: var(--border-purple-glow);
+  box-shadow: 0 6px 24px rgba(126, 34, 206, 0.2);
+}
+
+.dark-input {
+  width: 100%;
+  background-color: rgba(15, 10, 30, 0.8);
+  border: 1px solid var(--border-purple);
+  border-radius: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  color: #e2e8f0;
+  outline: none;
+  transition: all 0.2s ease;
+  text-align: right;
+  direction: rtl;
+  box-sizing: border-box;
+}
+
+.dark-input:focus {
+  border-color: #a855f7;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.25);
+}
+
+.dark-input option {
+  background-color: #130d24;
+  color: #f1f5f9;
+}
+
+/* ==========================================================================
+   ۴. منوی تب‌ها و بج‌ها
+   ========================================================================== */
+.tab-btn {
+  background-color: rgba(20, 14, 38, 0.5);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  color: #cbd5e1;
+  text-align: right;
+  direction: rtl;
+  cursor: pointer;
+}
+
+.tab-btn:hover {
+  background-color: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.3);
+  color: #f1f5f9;
+}
+
+.tab-btn.active {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.9) 0%, rgba(79, 70, 229, 0.9) 100%);
+  border-color: rgba(192, 132, 252, 0.5);
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(147, 51, 234, 0.4);
+}
+
+.badge {
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  backdrop-filter: blur(4px);
+  display: inline-block;
+}
+
+.badge-purple { background: rgba(147, 51, 234, 0.25); border: 1px solid rgba(168, 85, 247, 0.4); color: #e9d5ff; }
+.badge-indigo { background: rgba(99, 102, 241, 0.25); border: 1px solid rgba(129, 140, 248, 0.4); color: #c7d2fe; }
+.badge-amber  { background: rgba(217, 119, 6, 0.25); border: 1px solid rgba(251, 191, 36, 0.4); color: #fef08a; }
+.badge-yellow { background: rgba(202, 138, 4, 0.25); border: 1px solid rgba(250, 204, 21, 0.4); color: #fef9c3; }
+.badge-fuchsia{ background: rgba(192, 38, 211, 0.25); border: 1px solid rgba(232, 121, 249, 0.4); color: #f5d0fe; }
+.badge-emerald{ background: rgba(5, 150, 105, 0.25); border: 1px solid rgba(52, 211, 153, 0.4); color: #a7f3d0; }
+.badge-rose   { background: rgba(225, 29, 72, 0.25); border: 1px solid rgba(251, 113, 133, 0.4); color: #fecdd3; }
+
+/* ==========================================================================
+   ۵. قوانین ریسپانسو اختصاصی (Media Queries)
+   ========================================================================== */
+@media (max-width: 640px) {
+  .navbar-date-badge {
+    display: none;
+  }
+  .btn-text {
+    display: none;
+  }
+  .main-navbar-container {
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b0717;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.6);
+}

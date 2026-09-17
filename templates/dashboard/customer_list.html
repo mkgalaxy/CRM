@@ -1,0 +1,206 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لیست مشتریان - فروشگاه بی‌نظیر</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+</head>
+<body class="dark-purple-theme text-slate-100 min-h-screen font-sans antialiased selection:bg-purple-500 selection:text-white">
+
+    <!-- ۱. فراخوانی هدر یکسان -->
+    {% include "header.html" %}
+
+    <!-- ۲. بدنه اصلی -->
+    <main class="container mx-auto px-3 md:px-6 my-6 max-w-7xl space-y-6">
+
+        <!-- پیام‌های سیستم -->
+        {% if messages %}
+            <div class="space-y-2">
+                {% for message in messages %}
+                    <div class="p-4 bg-emerald-950/40 border border-emerald-800/50 text-emerald-300 text-xs sm:text-sm font-semibold rounded-2xl flex items-center gap-2 shadow-sm">
+                        <span>✅</span>
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- نوار جستجو و دکمه افزودن -->
+        <div class="card-dark flex flex-col sm:flex-row items-center justify-between gap-4">
+            <form method="GET" class="w-full sm:w-96 flex gap-2">
+                <input type="text" name="q" value="{{ request.GET.q|default:search_query }}" placeholder="جستجوی نام، شماره تماس..."
+                       class="dark-input text-xs">
+                <button type="submit" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold transition shrink-0 shadow-lg shadow-purple-950/40">
+                    جستجو
+                </button>
+            </form>
+
+            <a href="{% url 'customer_add' %}" class="w-full sm:w-auto px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-lg shadow-purple-950/40">
+                <span>👤</span>
+                <span>+ افزودن مشتری جدید</span>
+            </a>
+        </div>
+
+        <!-- کارت جدول اصلی -->
+        <div class="card-dark p-0 overflow-hidden">
+            <div class="p-4 bg-purple-950/30 border-b border-purple-900/40 flex justify-between items-center">
+                <h1 class="font-bold text-purple-100 text-sm md:text-base flex items-center gap-2">
+                    <span>👥</span>
+                    <span>کلیه مشتریان ثبت‌شده</span>
+                </h1>
+                <span class="badge badge-purple font-mono">
+                    مجموع: {{ customers|length }} نفر
+                </span>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-right text-xs">
+                    <thead class="bg-purple-950/50 text-purple-300/70 font-bold border-b border-purple-900/40">
+                        <tr>
+                            <th class="p-3.5">نام و نام خانوادگی</th>
+                            <th class="p-3.5">شماره تماس</th>
+                            <th class="p-3.5">وضعیت</th>
+                            <th class="p-3.5">محصولات مورد نظر</th>
+                            <th class="p-3.5">تاریخ پیگیری بعدی</th>
+                            <th class="p-3.5 text-center">عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-purple-900/30 font-medium text-purple-200">
+                        {% if customers %}
+                            {% for customer in customers %}
+                                <tr class="hover:bg-purple-900/20 transition">
+                                    <td class="p-3.5 font-bold text-purple-100">
+                                        {{ customer.full_name }}
+                                    </td>
+                                    <td class="p-3.5 dir-ltr text-right font-mono text-purple-300">
+                                        {{ customer.phone }}
+                                    </td>
+                                    <td class="p-3.5">
+                                        <span class="badge badge-purple text-[11px]">
+                                            {{ customer.get_status_display|default:customer.status }}
+                                        </span>
+                                    </td>
+                                    <td class="p-3.5 text-purple-300/80">
+                                        {{ customer.interested_products|default:"-" }}
+                                    </td>
+                                    <td class="p-3.5">
+                                        {% if customer.jnext_followup_date and customer.jnext_followup_date != "-" %}
+                                            <span class="badge badge-amber dir-ltr inline-block font-mono text-[11px]">
+                                                📅 {{ customer.jnext_followup_date }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-purple-300/40">ثبت نشده</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="p-3.5 text-center flex items-center justify-center gap-1.5">
+                                        <!-- تایم‌لاین -->
+                                        <a href="{% url 'customer_detail' customer.id %}" class="px-3 py-1.5 bg-purple-900/40 hover:bg-purple-900/60 text-purple-200 rounded-xl text-[11px] font-bold border border-purple-800/40 transition flex items-center gap-1">
+                                            <span>📜</span>
+                                            <span>تایم‌لاین</span>
+                                        </a>
+
+                                        <!-- ویرایش کامل -->
+                                        <a href="{% url 'customer_edit' customer.id %}" class="px-3 py-1.5 bg-amber-950/40 hover:bg-amber-900/60 text-amber-300 rounded-xl text-[11px] font-bold border border-amber-800/40 transition flex items-center gap-1">
+                                            <span>✏️</span>
+                                            <span>ویرایش</span>
+                                        </a>
+
+                                        <!-- حذف -->
+                                        <form method="POST" action="{% url 'customer_delete' customer.id %}" onsubmit="return confirm('آیا از حذف کامل مشتری «{{ customer.full_name }}» اطمینان دارید؟');" class="inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="px-3 py-1.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 rounded-xl text-[11px] font-bold border border-rose-800/40 transition flex items-center gap-1">
+                                                <span>🗑️</span>
+                                                <span>حذف</span>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-12 text-purple-300/50 font-semibold">
+                                    هیچ مشتری مطابق با فیلتر یافت نشد.
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- مدال (Modal) ویرایش اطلاعات متناسب با تم دارک -->
+    <div id="editModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="card-dark w-full max-w-lg p-0 overflow-hidden shadow-2xl">
+            <div class="p-4 bg-purple-950/50 text-white flex justify-between items-center border-b border-purple-900/40">
+                <h3 class="font-bold text-sm flex items-center gap-1.5 text-purple-200">
+                    <span>✏️</span>
+                    <span>ویرایش سریع اطلاعات مشتری</span>
+                </h3>
+                <button onclick="closeEditModal()" class="text-purple-300/60 hover:text-white font-bold text-lg transition">&times;</button>
+            </div>
+
+            <form id="editForm" method="POST" action="{% url 'customer_edit' 0 %}" class="p-6 space-y-4 text-xs">
+                {% csrf_token %}
+                <div>
+                    <label class="block font-bold mb-2 text-purple-200">نام و نام خانوادگی:</label>
+                    <input type="text" id="edit_full_name" name="full_name" required class="dark-input">
+                </div>
+
+                <div>
+                    <label class="block font-bold mb-2 text-purple-200">شماره تماس:</label>
+                    <input type="text" id="edit_phone" name="phone" required class="dark-input dir-ltr text-right font-mono">
+                </div>
+
+                <div>
+                    <label class="block font-bold mb-2 text-purple-200">وضعیت مشتری:</label>
+                    <select id="edit_status" name="status" class="dark-input font-semibold">
+                        <option value="NEW">جدید</option>
+                        <option value="NEED_FOLLOWUP">نیازمند پیگیری</option>
+                        <option value="IN_TALKS">در حال مذاکره</option>
+                        <option value="BOUGHT">خرید انجام شده</option>
+                        <option value="CANCELED">منصرف شده</option>
+                        <option value="LOST">از دست رفته</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-bold mb-2 text-purple-200">محصولات مورد نظر:</label>
+                    <input type="text" id="edit_interested_products" name="interested_products" class="dark-input">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4 border-t border-purple-900/40">
+                    <button type="button" onclick="closeEditModal()" class="px-4 py-2 text-xs font-bold text-purple-300 hover:text-white rounded-xl hover:bg-purple-900/40 transition">
+                        انصراف
+                    </button>
+                    <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-500 rounded-xl shadow-lg shadow-purple-950/50 transition">
+                        ثبت تغییرات
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- اسکریپت مدال -->
+    <script>
+        function openEditModal(id, fullName, phone, status, products) {
+            const form = document.getElementById('editForm');
+            form.action = form.action.replace(/\/0\/$/, '/' + id + '/');
+            document.getElementById('edit_full_name').value = fullName;
+            document.getElementById('edit_phone').value = phone;
+            document.getElementById('edit_status').value = status;
+            document.getElementById('edit_interested_products').value = products;
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

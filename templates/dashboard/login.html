@@ -1,0 +1,72 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ورود به پنل - فروشگاه بی‌نظیر</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+</head>
+<body class="dark-purple-theme text-slate-100 min-h-screen font-sans antialiased flex items-center justify-center p-4 selection:bg-purple-500 selection:text-white">
+
+    <!-- بک‌گراند دکوراتیو جهت ایجاد نور بنفش نئونی -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute -top-40 -left-40 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl"></div>
+    </div>
+
+    <!-- کارت ورود شیشه‌ای هماهنگ با تم دارک بنفش -->
+    <div class="relative w-full max-w-md card-dark p-6 sm:p-8 space-y-6 z-10 shadow-2xl shadow-purple-950/60 border-purple-900/40">
+
+        <!-- لوگو و عنوان -->
+        <div class="text-center space-y-2">
+            <div class="inline-flex items-center justify-center p-3 bg-purple-500/10 rounded-2xl border border-purple-500/20 mb-1 shadow-inner">
+                <span class="text-3xl">🏬</span>
+            </div>
+            <h1 class="text-2xl font-black text-purple-200 tracking-tight">فروشگاه بی‌نظیر</h1>
+            <p class="text-xs text-purple-300/70 font-medium">ورود به پنل مدیریت و پیگیری‌ها</p>
+        </div>
+
+        <!-- نمایش خطاها -->
+        {% if form.errors %}
+            <div class="bg-rose-950/40 border border-rose-800/50 text-rose-300 p-3.5 rounded-2xl text-xs font-semibold flex items-center gap-2 shadow-sm">
+                <span>⚠️</span>
+                <span>نام کاربری یا رمز عبور اشتباه است. لطفاً دوباره تلاش کنید.</span>
+            </div>
+        {% endif %}
+
+        <!-- فرم ورود -->
+        <form method="POST" class="space-y-4">
+            {% csrf_token %}
+
+            <input type="hidden" name="next" value="{{ next|default:'/' }}">
+
+            <div>
+                <label class="block text-xs font-bold text-purple-200 mb-2">نام کاربری</label>
+                <input type="text" name="username" required autocomplete="username"
+                       class="dark-input dir-ltr text-right">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-purple-200 mb-2">رمز عبور</label>
+                <input type="password" name="password" required autocomplete="current-password"
+                       class="dark-input dir-ltr text-right">
+            </div>
+
+            <button type="submit" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-purple-950/50 transition text-xs flex items-center justify-center gap-2">
+                <span>🔐</span>
+                <span>ورود به داشبورد</span>
+            </button>
+        </form>
+
+        <!-- فوتر کارت -->
+        <div class="pt-4 border-t border-purple-900/40 text-center">
+            <span class="text-[11px] text-purple-300/50 font-medium">سامانه مدیریت مشتریان و سفارشات</span>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,38 @@
+{% load static %}
+<!-- هدر اصلی - راست‌چین و کاملاً ریسپانسو -->
+<header class="main-navbar">
+    <div class="main-navbar-container">
+        <!-- سمت راست: لوگو، عنوان و بج تاریخ -->
+        <div class="navbar-right">
+            <a href="{% url 'dashboard_home' %}" class="navbar-brand">
+                <span class="brand-icon">🏬</span>
+                <span class="brand-title">فروشگاه بی‌نظیر</span>
+            </a>
+            <span class="navbar-date-badge">
+                <span class="date-pulse-dot"></span>
+                <span>امروز: {{ current_jdate }}</span>
+            </span>
+        </div>
+
+        <!-- سمت چپ: اکشن‌ها و دکمه‌ها -->
+        <div class="navbar-left">
+            <button id="enable-notifications-btn" onclick="requestNotificationPermission()" class="navbar-btn btn-purple">
+                <span>🔔</span>
+                <span class="btn-text">فعال‌سازی یادآور هوشمند</span>
+            </button>
+
+            <a href="{% url 'reports_dashboard' %}" class="navbar-btn btn-dark">
+                <span>📊</span>
+                <span>گزارشات</span>
+            </a>
+
+            <form action="{% url 'admin:logout' %}" method="post" class="navbar-logout-form">
+                {% csrf_token %}
+                <button type="submit" class="navbar-btn btn-rose">
+                    <span>🚪</span>
+                    <span>خروج</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</header>

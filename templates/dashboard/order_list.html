@@ -1,0 +1,180 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدیریت سفارشات - فروشگاه بی‌نظیر</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+</head>
+<body class="dark-purple-theme text-slate-100 min-h-screen font-sans antialiased selection:bg-purple-500 selection:text-white pb-10">
+
+    {% include "header.html" %}
+
+    <main class="container mx-auto px-3 md:px-6 my-6 max-w-7xl space-y-6">
+
+        <!-- کارت سربرگ -->
+        <div class="card-dark flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-lg md:text-xl font-bold text-purple-100 flex items-center gap-2">
+                    <span>📦</span>
+                    <span>مدیریت و پیگیری سفارشات</span>
+                </h1>
+                <p class="text-xs text-purple-300/70 mt-1">مشاهده، فیلتر و پیگیری چرخه سفارش از تولید در تهران تا تحویل مشتری</p>
+            </div>
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <a href="{% url 'order_add' %}" class="w-full md:w-auto text-center bg-purple-600 hover:bg-purple-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-lg shadow-purple-950/40">
+                    <span>➕</span>
+                    <span>ثبت سفارش جدید</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- پیام‌های سیستم -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="p-4 rounded-2xl text-xs sm:text-sm font-semibold flex items-center gap-2 shadow-sm {% if message.tags == 'success' %}bg-emerald-950/40 text-emerald-300 border border-emerald-800/50{% else %}bg-amber-950/40 text-amber-300 border border-amber-800/50{% endif %}">
+                    <span>{% if message.tags == 'success' %}✅{% else %}⚠️{% endif %}</span>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- نوار فیلتر سریع وضعیت -->
+        <div class="card-dark p-4 flex flex-wrap gap-2 items-center text-xs">
+            <span class="font-bold text-purple-300/70 ml-2 flex items-center gap-1">
+                <span>🔍</span>
+                <span>فیلتر وضعیت:</span>
+            </span>
+
+            <a href="{% url 'order_list' %}"
+               class="px-3 py-1.5 rounded-xl font-bold transition {% if not current_status %}bg-purple-600 text-white shadow-sm{% else %}bg-purple-900/40 text-purple-300 hover:bg-purple-900/60 hover:text-white{% endif %}">
+                همه سفارش‌ها
+            </a>
+
+            {% for code, label in status_choices %}
+                <a href="?status={{ code }}"
+                   class="px-3 py-1.5 rounded-xl font-semibold transition {% if current_status == code %}bg-purple-600 text-white shadow-xs{% else %}bg-purple-900/40 text-purple-300 hover:bg-purple-900/60 hover:text-white{% endif %}">
+                    {{ label }}
+                </a>
+            {% endfor %}
+        </div>
+
+        <!-- جدول سفارشات -->
+        <div class="card-dark p-0 overflow-hidden">
+            <div class="p-4 bg-purple-950/30 border-b border-purple-900/40 flex justify-between items-center">
+                <h2 class="font-bold text-purple-100 text-xs sm:text-sm flex items-center gap-1.5">
+                    <span>📋</span>
+                    <span>لیست کل سفارش‌ها</span>
+                </h2>
+                <span class="badge badge-purple font-mono">
+                    مجموع: {{ orders|length }} سفارش
+                </span>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-right text-xs">
+                    <thead class="bg-purple-950/50 text-purple-300/70 font-bold border-b border-purple-900/40">
+                        <tr>
+                            <th class="p-3.5">کد سفارش</th>
+                            <th class="p-3.5">عنوان سفارش</th>
+                            <th class="p-3.5">مشتری</th>
+                            <th class="p-3.5">تولیدکننده (تهران)</th>
+                            <th class="p-3.5">وضعیت</th>
+                            <th class="p-3.5">مبلغ کل (تومان)</th>
+                            <th class="p-3.5">پیش‌پرداخت</th>
+                            <th class="p-3.5">مانده حساب</th>
+                            <th class="p-3.5 text-center">عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-purple-900/30 font-medium text-purple-200">
+                        {% for order in orders %}
+                            <tr class="hover:bg-purple-900/20 transition">
+                                <td class="p-3.5 font-mono font-bold text-purple-400">
+                                    {{ order.order_code }}
+                                </td>
+
+                                <td class="p-3.5 font-bold text-purple-100">
+                                    {{ order.product_name }}
+                                    {% if order.description %}
+                                        <p class="text-[11px] font-normal text-purple-300/60 truncate max-w-xs mt-0.5">{{ order.description }}</p>
+                                    {% endif %}
+                                </td>
+
+                                <td class="p-3.5">
+                                    {% if order.customer %}
+                                        <a href="{% url 'customer_detail' order.customer.id %}" class="text-purple-300 font-bold hover:text-purple-100 hover:underline">
+                                            {{ order.customer.full_name }}
+                                        </a>
+                                        <span class="block text-[11px] text-purple-300/60 font-mono dir-ltr text-right">{{ order.customer.phone }}</span>
+                                    {% else %}
+                                        <span class="text-purple-300/50">—</span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="p-3.5 text-purple-200">
+                                    {% if order.supplier %}
+                                        <span class="inline-flex items-center gap-1 bg-amber-950/40 text-amber-300 border border-amber-800/40 px-2.5 py-1 rounded-lg font-bold">
+                                            🏢 {{ order.supplier.name }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-purple-300/50">تعیین نشده</span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="p-3.5">
+                                    <span class="px-2.5 py-1 rounded-lg font-bold bg-purple-950/60 text-purple-300 border border-purple-800/50">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </td>
+
+                                <td class="p-3.5 font-mono font-bold text-purple-100">
+                                    {{ order.formatted_total_amount }}
+                                </td>
+
+                                <td class="p-3.5 font-mono font-bold text-emerald-400">
+                                    {{ order.formatted_paid_amount }}
+                                </td>
+
+                                <td class="p-3.5 font-mono font-bold">
+                                    {% if order.remaining_amount > 0 %}
+                                        <span class="text-rose-400">{{ order.remaining_balance }}</span>
+                                    {% else %}
+                                        <span class="text-emerald-400">تسویه شده</span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="p-3.5 text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <a href="{% url 'order_edit' order.id %}" class="px-2.5 py-1.5 bg-purple-900/40 hover:bg-purple-800/60 text-purple-200 border border-purple-700/40 rounded-lg text-xs font-semibold transition flex items-center gap-1" title="ویرایش">
+                                            <span>✏️</span>
+                                            <span>ویرایش</span>
+                                        </a>
+                                        <form method="POST" action="{% url 'order_delete' order.id %}" onsubmit="return confirm('آیا از حذف این سفارش اطمینان دارید؟');" class="inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="px-2.5 py-1.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 rounded-lg text-xs font-semibold transition flex items-center gap-1" title="حذف">
+                                                <span>🗑️</span>
+                                                <span>حذف</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="9" class="p-12 text-center text-purple-300/50 font-semibold">
+                                    هیچ سفارشی مطابق با این مشخصات یا فیلتر یافت نشد.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+</body>
+</html>
